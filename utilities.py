@@ -1,6 +1,9 @@
 __author__ = 'fabian'
 
 # FROM OLD API
+"""
+Don't change the order in this map, otherwise it might break
+"""
 _ESCAPE_MAP = [
     ("\\", r"\\"),
     ("/", r"\/"),
@@ -17,12 +20,18 @@ _ESCAPE_MAP = [
 
 
 def escape(raw):
+    """
+    Escapes characters that need escaping according to _ESCAPE_MAP
+    """
     for char, replacement in _ESCAPE_MAP:
         raw = raw.replace(char, replacement)
     return raw
 
 
 def unescape(raw):
+    """
+    Undo escaping of characters according to _ESCAPE_MAP
+    """
     for replacement, char in reversed(_ESCAPE_MAP):
         raw = raw.replace(char, replacement)
     return raw
