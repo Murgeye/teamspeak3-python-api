@@ -4,9 +4,9 @@ import socket
 import logging
 import threading
 import time
-import ts3.Events as Events
+from . import Events
 import blinker
-import ts3.utilities
+from . import utilities
 
 
 class TS3Connection(object):
@@ -14,7 +14,7 @@ class TS3Connection(object):
     Connection class for the TS3 API. Uses a telnet connection to send messages to and receive messages from the
     Teamspeak 3 server.
     """
-    def __init__(self, host="127.0.0.1", port=10011):
+    def __init__(self, host="127.0.0.1", port=10011, log_file="api.log"):
         """
         Creates a new TS3Connection.
         :param host: Host to connect to. Can be an IP address or a hostname.
@@ -32,7 +32,7 @@ class TS3Connection(object):
         self._data_read.set()
         self._data = None
         # create console handler and set level to warning
-        file_handler = logging.FileHandler("api.log", mode='a+')
+        file_handler = logging.FileHandler(log_file, mode='a+')
         file_handler.setLevel(logging.WARNING)
 
         # create formatter
@@ -101,7 +101,7 @@ class TS3Connection(object):
         saved_resp = b''
         ack = False
         for arg in args:
-            query += " " + ts3.utilities.escape(arg)
+            query += " " + utilities.escape(arg)
         query += "\n\r"
         query = query.encode()
         resp = None
@@ -173,7 +173,7 @@ class TS3Connection(object):
             # TODO: Handle empty data?
             if len(split) == 2:
                 key, value = split
-                info[key] = ts3.utilities.unescape(value)
+                info[key] = utilities.unescape(value)
         return info
 
     @staticmethod
@@ -341,7 +341,7 @@ class TS3Connection(object):
                 split = info.split('=', 1)
                 if len(split) == 2:
                     key, value = split
-                    event[key] = ts3.utilities.unescape(value)
+                    event[key] = utilities.unescape(value)
             event = Events.EventParser.parse_event(event, event_type)
             signal = blinker.signal("event")
             self._logger.debug("Sending signal")
@@ -415,7 +415,7 @@ class TS3QueryException(TS3Exception):
         :type message: str
         """
         self._id = error_id
-        self._msg = ts3.utilities.unescape(message)
+        self._msg = utilities.unescape(message)
         super(TS3Exception, self).__init__("Query failed with id = "+str(error_id))
 
     @property
