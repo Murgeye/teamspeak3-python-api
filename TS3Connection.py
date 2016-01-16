@@ -124,7 +124,7 @@ class TS3Connection(object):
                             if resp[1] != b'id=0':
                                 self._tel_lock.release()
                                 raise TS3QueryException(int(resp[1].decode(encoding='UTF-8').split("=", 1)[1]), resp[2].
-                                                        decode(encoding='UTF-8'))
+                                                        decode(encoding='UTF-8').split("=",1)[1])
                         else:
                             self._logger.debug("Resp: " + str(resp))
                             saved_resp += resp
@@ -416,7 +416,7 @@ class TS3QueryException(TS3Exception):
         """
         self._id = error_id
         self._msg = utilities.unescape(message)
-        super(TS3Exception, self).__init__("Query failed with id = "+str(error_id))
+        super(TS3Exception, self).__init__("Query failed with id="+str(error_id)+" msg="+str(self._msg))
 
     @property
     def message(self):
