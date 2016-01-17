@@ -320,12 +320,12 @@ class ClientMovedSelfEvent(TS3Event):
 class TextMessageEvent(TS3Event):
     def __init__(self, data):
         self._data = list(data)
-        if data.get('targetmode') is '1':
+        if data.get('targetmode') == '1':
             self._targetmode = 'Private'
             self._target = data.get('target')
-        elif data.get('targetmode') is '2':
+        elif data.get('targetmode') == '2':
             self._targetmode = 'Channel'
-        elif data.get('targetmode') is '3':
+        elif data.get('targetmode') == '3':
             self._targetmode = 'Server'
 
         self._message = data.get('msg')
@@ -355,7 +355,7 @@ class TextMessageEvent(TS3Event):
 
     @property
     def target(self):
-        if self.get_targetmode() is 'Private':
+        if self.get_targetmode() == 'Private':
             return self._target
         else:
             return None
