@@ -236,6 +236,19 @@ class TS3Connection(object):
             params = []
         self._send("clientupdate", params)
 
+    def clientkick(self, client_id, reason_id, reason_msg):
+        """
+        Kick a client from the server.
+        :param client_id: Client id of the user to kick.
+        :type client_id: int
+        :param reason_id: 4 - kick from channel 5 - kick from Server
+        :type reason_id: int
+        :param reason_msg: Message to send on kick, max. 40 characters
+        :type readon_msg: str
+        """
+        self._send("clientkick", ["clid="+str(client_id),
+            "reasonid="+str(reason_id), "reasonmsg="+str(reason_msg)])
+
     def whoami(self):
         """
         Returns info of the query client.
