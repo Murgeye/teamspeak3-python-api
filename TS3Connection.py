@@ -1,4 +1,4 @@
-__author__ = 'fabian'
+"""Main TS3Api File"""
 import telnetlib
 import socket
 import logging
@@ -79,8 +79,8 @@ class TS3Connection(object):
             args.append("-" + p)
         clist = self._send("clientlist", args)
         clients = TS3Connection._parse_resp_to_list_of_dicts(clist)
-        if len(clients)==0:
-            self._logger.warning("Clientlist empty" +str(clist))
+        if len(clients) == 0:
+            self._logger.warning("Clientlist empty" + str(clist))
         return clients
 
     def _send(self, command, args=list(), wait_for_resp=True, log_keepalive=False):
@@ -124,7 +124,7 @@ class TS3Connection(object):
                             if resp[1] != b'id=0':
                                 self._tel_lock.release()
                                 raise TS3QueryException(int(resp[1].decode(encoding='UTF-8').split("=", 1)[1]), resp[2].
-                                                        decode(encoding='UTF-8').split("=",1)[1])
+                                                        decode(encoding='UTF-8').split("=", 1)[1])
                         else:
                             self._logger.debug("Resp: " + str(resp))
                             saved_resp += resp
@@ -244,7 +244,7 @@ class TS3Connection(object):
         :param reason_id: 4 - kick from channel 5 - kick from Server
         :type reason_id: int
         :param reason_msg: Message to send on kick, max. 40 characters
-        :type readon_msg: str
+        :type reason_msg: str
         """
         self._send("clientkick", ["clid="+str(client_id),
             "reasonid="+str(reason_id), "reasonmsg="+str(reason_msg)])
@@ -419,6 +419,9 @@ class TS3Exception(Exception):
 
 
 class TS3QueryException(TS3Exception):
+    """
+    Query exception class to signalize failed queries and connection errors.
+    """
     def __init__(self, error_id, message):
         """
         Creates a new QueryException.

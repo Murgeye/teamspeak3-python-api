@@ -1,4 +1,4 @@
-__author__ = 'fabian'
+"""Utility variables and functions for the TS3 API"""
 
 # FROM OLD API
 """
