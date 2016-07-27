@@ -55,7 +55,7 @@ class EventParser(object):
         elif "notifychanneledited" == event_type:
             parsed_event = ChannelEditedEvent(event)
             return parsed_event
-        elif "serveredited" == event_type:
+        elif "notifyserveredited" == event_type:
             parsed_event = ServerEditedEvent(event)
             return parsed_event
         else:
