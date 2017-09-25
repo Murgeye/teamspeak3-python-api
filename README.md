@@ -46,4 +46,4 @@ ts3conn.register_for_private_messages(on_event)
 # Start the loop to send connection keepalive messages
 ts3conn.start_keepalive_loop()
 ```
-For a more elaborated example see the ts3Bot project based on this API see https://github.com/Murgeye/ts3Bot
+For a more elaborated example of this API see the ts3Bot project: https://github.com/Murgeye/ts3Bot

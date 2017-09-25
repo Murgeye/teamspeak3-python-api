@@ -248,10 +248,10 @@ class ClientEnteredEvent(TS3Event):
 class ClientLeftEvent(TS3Event):
     def __init__(self, data):
         self._data = list(data)
-        self._client_id = int(data.get('clid', ''))
-        self._target_channel_id = int(data.get('ctid', ''))
-        self._from_channel_id = int(data.get('cfid', ''))
-        self._reason_id = int(data.get('reasonid', ''))
+        self._client_id = int(data.get('clid', '-1'))
+        self._target_channel_id = int(data.get('ctid', '-1'))
+        self._from_channel_id = int(data.get('cfid', '-1'))
+        self._reason_id = int(data.get('reasonid', '-1'))
         self._reason_msg = data.get('reasonmsg', '')
 
     @property
