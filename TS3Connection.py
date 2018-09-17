@@ -383,7 +383,7 @@ class TS3Connection(object):
         """
         Sends a keepalive message to the server to prevent timeout. Keepalive message is "\n\r".
         """
-        self._send("", wait_for_resp=False)
+        self._send("whoami", wait_for_resp=True)
 
     def keepalive_loop(self, interval=5):
         """
