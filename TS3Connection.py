@@ -413,6 +413,31 @@ class TS3Connection(object):
         """
         threading.Thread(target=self.keepalive_loop, args=(interval,)).start()
 
+    def __getattr__(self, item):
+        """
+        manages unknown functions by sending command to ts3server
+        inspired by rpc communication
+        e.g. usage for 'clientdblist start=1 -count': ts3conn.clientdblist(start=1, 'count')
+        :param item: name of the function
+        :return: wrapper
+        """
+        def wrapper(*args, **kwargs):
+            """
+            This function sends the unknown call to ts3 like rpc.
+            If response is received it will be returned
+            :param args: list of parameters within the function head
+            :param kwargs: dict of labeled parameters within the function head
+            :return: (List of) Dictionary response or nothing, depends on ts3server response
+            """
+            resp = self._send(item,
+                              ['-{}'.format(x) for x in args]
+                              + ['{}={}'.format(x[0], x[1]) for x in kwargs.items()])
+            if resp:
+                parsed_resp = self._parse_resp_to_list_of_dicts(resp)
+                return parsed_resp[0] if len(parsed_resp) is 1 else parsed_resp
+
+        return wrapper
+
 
 class TS3Exception(Exception):
     pass
