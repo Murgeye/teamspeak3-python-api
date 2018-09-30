@@ -9,7 +9,7 @@ class TS3Event(object):
     Event class for Teamspeak 3 events. This is a stub for all other events.
     """
     def __init__(self, data):
-        self._data = list(data)
+        self._data = data
         self._logger = logging.getLogger(__name__)
         self._logger.setLevel(logging.DEBUG)
         # create console handler and set level to debug
@@ -65,7 +65,7 @@ class EventParser(object):
 
 class ServerEditedEvent(TS3Event):
     def __init__(self, data):
-        self._data = list(data)
+        self._data = data
         self._reason_id = data.get("reasonid", "")
         del data["reasonid"]
         self._invoker_id = data.get("invokerid", "-1")
@@ -99,7 +99,7 @@ class ServerEditedEvent(TS3Event):
 
 class ChannelEditedEvent(TS3Event):
     def __init__(self, data):
-        self._data = list(data)
+        self._data = data
         self._channel_id = data.get('cid', '-1')
         self._channel_topic = data.get('channel_topic', '')
         self._invoker_id = data.get('invokerid', '-1')
@@ -134,7 +134,7 @@ class ChannelEditedEvent(TS3Event):
 
 class ChannelDescriptionEditedEvent(TS3Event):
     def __init__(self, data):
-        self._data = list(data)
+        self._data = data
         self._channel_id = int(data.get('cid', '-1'))
 
     @property
@@ -144,7 +144,7 @@ class ChannelDescriptionEditedEvent(TS3Event):
 
 class ClientEnteredEvent(TS3Event):
     def __init__(self, data):
-        self._data = list(data)
+        self._data = data
         try:
             self._client_id = int(data.get('clid', '-1'))
             self._client_name = data.get('client_nickname', '')
@@ -247,7 +247,7 @@ class ClientEnteredEvent(TS3Event):
 
 class ClientLeftEvent(TS3Event):
     def __init__(self, data):
-        self._data = list(data)
+        self._data = data
         self._client_id = int(data.get('clid', '-1'))
         self._target_channel_id = int(data.get('ctid', '-1'))
         self._from_channel_id = int(data.get('cfid', '-1'))
@@ -273,7 +273,7 @@ class ClientLeftEvent(TS3Event):
 
 class ClientMovedEvent(TS3Event):
     def __init__(self, data):
-        self._data = list(data)
+        self._data = data
         self._client_id = int(data.get('clid', '-1'))
         self._target_channel_id = int(data.get('ctid', '-1'))
         self._reason_id = int(data.get('reasonid', '-1'))
@@ -308,7 +308,7 @@ class ClientMovedEvent(TS3Event):
 
 class ClientMovedSelfEvent(TS3Event):
     def __init__(self, data):
-        self._data = list(data)
+        self._data = data
         self._client_id = int(data.get('clid', '-1'))
         self._target_channel_id = int(data.get('ctid', '-1'))
         self._reason_id = int(data.get('reasonid', '-1'))
@@ -328,7 +328,7 @@ class ClientMovedSelfEvent(TS3Event):
 
 class TextMessageEvent(TS3Event):
     def __init__(self, data):
-        self._data = list(data)
+        self._data = data
         if data.get('targetmode') == '1':
             self._targetmode = 'Private'
             self._target = data.get('target')
