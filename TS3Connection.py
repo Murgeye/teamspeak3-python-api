@@ -193,6 +193,30 @@ class TS3Connection(object):
                 dict_list.append(TS3Connection._parse_resp_to_dict(resp))
         return dict_list
 
+    def register_for_server_messages(self, event_listener=None):
+        """
+        Register the event_listener for server message events. Be careful, you should ignore your own messages by
+        comparing the invoker_id to your client id ...
+        :param event_listener: Blinker signal handler function to be informed: on_event(sender, **kw), kw will contain
+        the event
+        :type event_listener: (str, dict[str, any]) -> None
+        """
+        self._send("servernotifyregister", ["event=textserver"])
+        if event_listener is not None:
+            blinker.signal("event").connect(event_listener)
+
+    def register_for_channel_messages(self, event_listener=None):
+        """
+        Register the event_listener for channel message events. Be careful, you should ignore your own messages by
+        comparing the invoker_id to your client id ...
+        :param event_listener: Blinker signal handler function to be informed: on_event(sender, **kw), kw will contain
+        the event
+        :type event_listener: (str, dict[str, any]) -> None
+        """
+        self._send("servernotifyregister", ["event=textchannel"])
+        if event_listener is not None:
+            blinker.signal("event").connect(event_listener)
+
     def register_for_private_messages(self, event_listener=None):
         """
         Register the event_listener for private message events. Be careful, you should ignore your own messages by
@@ -213,6 +237,17 @@ class TS3Connection(object):
         :type event_listener: (str, dict[str, any]) -> None
         """
         self._send("servernotifyregister", ["event=server"])
+        if event_listener is not None:
+            blinker.signal("event").connect(event_listener)
+
+    def register_for_channel_events(self, channel_id, event_listener=None):
+        """
+        Register event_listener for receiving channel_events.
+        :param event_listener: Blinker signal handler function to be informed: on_event(sender, **kw), kw will contain
+        the event
+        :type event_listener: (str, dict[str, any]) -> None
+        """
+        self._send("servernotifyregister", ["event=channel", "id="+channel_id])
         if event_listener is not None:
             blinker.signal("event").connect(event_listener)
 
