@@ -4,9 +4,11 @@ import socket
 import logging
 import threading
 import time
+
 from . import Events
 import blinker
 from . import utilities
+from .utilities import TS3Exception
 
 
 class TS3Connection(object):
@@ -14,16 +16,19 @@ class TS3Connection(object):
     Connection class for the TS3 API. Uses a telnet connection to send messages to and receive messages from the
     Teamspeak 3 server.
     """
-    def __init__(self, host="127.0.0.1", port=10011, log_file="api.log"):
+    def __init__(self, host="127.0.0.1", port=10011, log_file="api.log", use_ssh=False, username=None, password=None,
+                 accept_all_keys=False, host_key_file=None, use_system_hosts=False):
         """
         Creates a new TS3Connection.
         :param host: Host to connect to. Can be an IP address or a hostname.
         :param port: Port to connect to.
+        :param use_ssh: Should an encrypted ssh connection be used?
         :type host: str
         :type port: int
+        :type use_ssh: bool
         """
-        self._tel_lock = threading.Lock()
-        self._tel_conn = telnetlib.Telnet(host, port, timeout=socket.getdefaulttimeout())
+        self._is_ssh = use_ssh
+        self._conn_lock = threading.Lock()
         self._logger = logging.getLogger(__name__)
         self._logger.setLevel(logging.WARNING)
         self.stop_recv = threading.Event()
@@ -43,9 +48,19 @@ class TS3Connection(object):
 
         # add ch to logger
         self._logger.addHandler(file_handler)
-        self._logger.debug(self._tel_conn.read_until(b"\n\r"))
-        self._logger.debug(self._tel_conn.read_until(b"\n\r"))
+
+        if not use_ssh:
+            self._conn = telnetlib.Telnet(host, port, timeout=socket.getdefaulttimeout())
+            self._logger.debug(self._conn.read_until(b"\n\r"))
+            self._logger.debug(self._conn.read_until(b"\n\r"))
+        else:
+            from .SSHConnWrapper import SSHConnWrapper
+            self._conn = SSHConnWrapper(host, port, username, password, accept_all_keys=accept_all_keys, host_key_file=host_key_file)
+            self._logger.debug(self._conn.read_until(b"\n\r"))
+            self._logger.debug(self._conn.read_until(b"\n\r"))
         threading.Thread(target=self._recv).start()
+        if username is not None and password is not None and not use_ssh:
+            self.login(username, password)
 
     def login(self, user, password):
         """
@@ -55,7 +70,10 @@ class TS3Connection(object):
         :type user: str
         :type password: str
         """
-        self._send("login", [user, password])
+        if self._is_ssh:
+            self._logger.warning("Ignoring login command on ssh connection.")
+        else:
+            self._send("login", [user, password])
 
     def use(self, sid):
         """
@@ -105,12 +123,12 @@ class TS3Connection(object):
         query += "\n\r"
         query = query.encode()
         resp = None
-        if self._tel_lock.acquire():
+        if self._conn_lock.acquire():
             if not query == b'\n\r' or query == b'\n\r' and log_keepalive:
                 self._logger.debug("Query: " + str(query))
-            self._tel_conn.write(query)
+            self._conn.write(query)
             if not wait_for_resp:
-                self._tel_lock.release()
+                self._conn_lock.release()
                 return
             while not ack:
                 while resp is None:
@@ -122,14 +140,14 @@ class TS3Connection(object):
                         if resp[0] == b'error':
                             ack = True
                             if resp[1] != b'id=0':
-                                self._tel_lock.release()
+                                self._conn_lock.release()
                                 raise TS3QueryException(int(resp[1].decode(encoding='UTF-8').split("=", 1)[1]), resp[2].
                                                         decode(encoding='UTF-8').split("=", 1)[1])
                         else:
                             self._logger.debug("Resp: " + str(resp))
                             saved_resp += resp
                             resp = None
-        self._tel_lock.release()
+        self._conn_lock.release()
         self._logger.debug("Saved resp:" + str(saved_resp))
         return saved_resp
 
@@ -141,10 +159,10 @@ class TS3Connection(object):
         """
         while not self.stop_recv.is_set():
             try:
-                resp = self._tel_conn.read_until(b"\n\r")[:-2]
+                resp = self._conn.read_until(b"\n\r")[:-2]
             except EOFError:
                 if self.stop_recv.is_set():
-                    self._tel_conn.close()
+                    self._conn.close()
                     return
                 else:
                     raise TS3Exception("Connection was closed!")
@@ -407,9 +425,9 @@ class TS3Connection(object):
         :return: None if nothing was received, parsed response corresponding to _parse_resp otherwise.
         :rtype: None | dict[str, str] | bytes
         """
-        resp = self._tel_conn.read_until(b"\n\r", timeout)
+        resp = self._conn.read_until(b"\n\r", timeout)
         if len(resp) > 0 and not resp.endswith(b"\n\r"):
-            resp += self._tel_conn.read_until(b"\n\r")[:-2]
+            resp += self._conn.read_until(b"\n\r")[:-2]
         if len(resp) > 0:
             self._logger.debug("No wait Response: " + str(resp))
             return self._parse_resp(resp)
@@ -435,9 +453,9 @@ class TS3Connection(object):
         Stops the connection from receiving and sends the quit signal.
         """
         # Avoid unclean exit by interfering with response to pending query
-        if self._tel_lock.acquire():
+        if self._conn_lock.acquire():
             self.stop_recv.set()
-        self._tel_lock.release()
+        self._conn_lock.release()
         self._send("quit")
 
     def start_keepalive_loop(self, interval=5):
@@ -472,10 +490,6 @@ class TS3Connection(object):
                 return parsed_resp[0] if len(parsed_resp) is 1 else parsed_resp
 
         return wrapper
-
-
-class TS3Exception(Exception):
-    pass
 
 
 class TS3QueryException(TS3Exception):

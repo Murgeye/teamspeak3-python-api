@@ -35,3 +35,7 @@ def unescape(raw):
     for replacement, char in reversed(_ESCAPE_MAP):
         raw = raw.replace(char, replacement)
     return raw
+
+
+class TS3Exception(Exception):
+    pass
