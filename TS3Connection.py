@@ -294,7 +294,13 @@ class TS3Connection(object):
         """
         if params is None:
             params = []
-        self._send("clientupdate", params)
+        try:
+            self._send("clientupdate", params)
+        except TS3QueryException as ex:
+            if ex.id == 513:
+                return  # Nickname already in use.
+            else:
+                raise ex
 
     def clientkick(self, client_id, reason_id, reason_msg):
         """
