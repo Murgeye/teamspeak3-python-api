@@ -9,6 +9,7 @@ from . import Events
 import blinker
 from . import utilities
 from .utilities import TS3Exception
+from .TS3QueryExceptionType import TS3QueryExceptionType
 
 
 class TS3Connection(object):
@@ -280,8 +281,8 @@ class TS3Connection(object):
         try:
             self._send("clientmove", ["cid="+str(channel_id), "clid="+str(client_id)])
         except TS3QueryException as ex:
-            if ex.id == 770:
-                return  # Already member of channel.
+            if ex.type == TS3QueryExceptionType["CHANNEL_ALREADY_IN"]:
+                return
             else:
                 raise ex
 
@@ -297,8 +298,8 @@ class TS3Connection(object):
         try:
             self._send("clientupdate", params)
         except TS3QueryException as ex:
-            if ex.id == 513:
-                return  # Nickname already in use.
+            if ex.type == TS3QueryExceptionType["CLIENT_NICKNAME_INUSE"]:
+                return
             else:
                 raise ex
 
@@ -517,7 +518,7 @@ class TS3QueryException(TS3Exception):
         :type error_id: int
         :type message: str
         """
-        self._id = error_id
+        self._type = TS3QueryExceptionType(error_id)
         self._msg = utilities.unescape(message)
         super(TS3Exception, self).__init__("Query failed with id="+str(error_id)+" msg="+str(self._msg))
 
@@ -526,5 +527,5 @@ class TS3QueryException(TS3Exception):
         return self._msg
 
     @property
-    def id(self):
-        return self._id
+    def type(self):
+        return self._type
