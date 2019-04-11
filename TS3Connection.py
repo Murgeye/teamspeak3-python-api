@@ -277,7 +277,14 @@ class TS3Connection(object):
         :type channel_id: int
         :type client_id: int
         """
-        self._send("clientmove", ["cid="+str(channel_id), "clid="+str(client_id)])
+        try:
+            self._send("clientmove", ["cid="+str(channel_id), "clid="+str(client_id)])
+        except TS3QueryException as ex:
+            if ex.id == 770:
+                return  # Already member of channel.
+            else:
+                raise ex
+
 
     def clientupdate(self, params=None):
         """
