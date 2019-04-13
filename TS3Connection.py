@@ -288,13 +288,7 @@ class TS3Connection(object):
         """
         if params is None:
             params = []
-        try:
-            self._send("clientupdate", params)
-        except TS3QueryException as ex:
-            if ex.type == TS3QueryExceptionType["CLIENT_NICKNAME_INUSE"]:
-                return
-            else:
-                raise ex
+        self._send("clientupdate", params)
 
     def clientkick(self, client_id, reason_id, reason_msg):
         """
