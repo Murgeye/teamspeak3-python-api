@@ -278,14 +278,7 @@ class TS3Connection(object):
         :type channel_id: int
         :type client_id: int
         """
-        try:
-            self._send("clientmove", ["cid="+str(channel_id), "clid="+str(client_id)])
-        except TS3QueryException as ex:
-            if ex.type == TS3QueryExceptionType["CHANNEL_ALREADY_IN"]:
-                return
-            else:
-                raise ex
-
+        self._send("clientmove", ["cid="+str(channel_id), "clid="+str(client_id)])
 
     def clientupdate(self, params=None):
         """
