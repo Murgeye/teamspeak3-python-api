@@ -9,6 +9,7 @@ from . import Events
 import blinker
 from . import utilities
 from .utilities import TS3Exception
+from .TS3QueryExceptionType import TS3QueryExceptionType
 
 
 class TS3Connection(object):
@@ -504,7 +505,7 @@ class TS3QueryException(TS3Exception):
         :type error_id: int
         :type message: str
         """
-        self._id = error_id
+        self._type = TS3QueryExceptionType(error_id)
         self._msg = utilities.unescape(message)
         super(TS3Exception, self).__init__("Query failed with id="+str(error_id)+" msg="+str(self._msg))
 
@@ -513,5 +514,5 @@ class TS3QueryException(TS3Exception):
         return self._msg
 
     @property
-    def id(self):
-        return self._id
+    def type(self):
+        return self._type
