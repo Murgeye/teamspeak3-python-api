@@ -516,3 +516,7 @@ class TS3QueryException(TS3Exception):
     @property
     def type(self):
         return self._type
+
+    @property
+    def id(self):
+        return self._type.numerator

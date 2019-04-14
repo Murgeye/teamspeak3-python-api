@@ -1,6 +1,6 @@
-from enum import Enum
+from enum import IntEnum
 
-class TS3QueryExceptionType(Enum):
+class TS3QueryExceptionType(IntEnum):
     OK = 0
     UNDEFINED = 1
     NOT_IMPLEMENTED = 2
