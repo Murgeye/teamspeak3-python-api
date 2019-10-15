@@ -375,6 +375,18 @@ class TS3Connection(object):
         """
         return TS3Connection._parse_resp_to_list_of_dicts(self._send("servergrouplist"))
 
+    def find_servergroup_by_name(self, name):
+        """
+        Returns the servergroup with the specified name.
+        :param name: Name to look for.
+        :return: Server Group.
+        :rtype: dict[str, str]
+        """
+        sgl = self.servergrouplist()
+        for sg in sgl:
+            if sg["name"] == name:
+                return sg
+
     def clientinfo(self, client_id):
         """
         Returns clientinfo for a client specified by its id.
