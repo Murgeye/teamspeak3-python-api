@@ -224,7 +224,8 @@ class TS3Connection(object):
         """
         self._send("servernotifyregister", ["event=textserver"])
         if event_listener is not None:
-            blinker.signal("event").connect(event_listener, weak=weak_ref)
+            for event in Events.text_events:
+                blinker.signal(event+"_server").connect(event_listener, weak=weak_ref)
 
     def register_for_channel_messages(self, event_listener=None, weak_ref=True):
         """
@@ -238,7 +239,8 @@ class TS3Connection(object):
         """
         self._send("servernotifyregister", ["event=textchannel"])
         if event_listener is not None:
-            blinker.signal("event").connect(event_listener, weak=weak_ref)
+            for event in Events.text_events:
+                blinker.signal(event+"_channel").connect(event_listener, weak=weak_ref)
 
     def register_for_private_messages(self, event_listener=None, weak_ref=True):
         """
@@ -252,7 +254,8 @@ class TS3Connection(object):
         """
         self._send("servernotifyregister", ["event=textprivate"])
         if event_listener is not None:
-            blinker.signal("event").connect(event_listener, weak=weak_ref)
+            for event in Events.text_events:
+                blinker.signal(event+"_private").connect(event_listener, weak=weak_ref)
 
     def register_for_server_events(self, event_listener=None, weak_ref=True):
         """
@@ -265,7 +268,8 @@ class TS3Connection(object):
         """
         self._send("servernotifyregister", ["event=server"])
         if event_listener is not None:
-            blinker.signal("event").connect(event_listener, weak=weak_ref)
+            for event in Events.server_events:
+                blinker.signal(event).connect(event_listener, weak=weak_ref)
 
     def register_for_channel_events(self, channel_id, event_listener=None, weak_ref=True):
         """
@@ -278,7 +282,8 @@ class TS3Connection(object):
         """
         self._send("servernotifyregister", ["event=channel", "id="+channel_id])
         if event_listener is not None:
-            blinker.signal("event").connect(event_listener, weak=weak_ref)
+            for event in Events.channel_events:
+                blinker.signal(event).connect(event_listener, weak=weak_ref)
 
     def clientmove(self, channel_id, client_id):
         """
@@ -432,7 +437,10 @@ class TS3Connection(object):
                     key, value = split
                     event[key] = utilities.unescape(value)
             event = Events.EventParser.parse_event(event, event_type)
-            signal = blinker.signal("event")
+            if type(event) == Events.TextMessageEvent:
+                signal = blinker.signal(event_type+"_"+event.targetmode.lower())
+            else:
+                signal = blinker.signal(event_type)
             self._logger.debug("Sending signal")
             threading.Thread(target=signal.send, kwargs={'event': event}).start()
             return None

@@ -3,6 +3,10 @@ import logging
 import sys
 import traceback
 
+# Sadly, there seems to be no way to differentiate between the last two server events and the client events ...
+server_events = ["notifyserveredited", "notifycliententerview", "notifyclientleftview"]
+text_events = ["notifytextmessage"]
+channel_events = ["notifycliententerview", "notifyclientleftview", "notifyclientmoved", "notifychanneldescriptionchanged", "notifychanneledited"]
 
 class TS3Event(object):
     """
@@ -49,7 +53,7 @@ class EventParser(object):
         elif "notifyclientleftview" == event_type:
             parsed_event = ClientLeftEvent(event)
             return parsed_event
-        elif "notifychanneldescriptionchanged" in event:
+        elif "notifychanneldescriptionchanged" == event_type:
             parsed_event = ChannelDescriptionEditedEvent(event)
             return parsed_event
         elif "notifychanneledited" == event_type:
