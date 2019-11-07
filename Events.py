@@ -2,11 +2,23 @@
 import logging
 import sys
 import traceback
+from enum import IntEnum
 
 # Sadly, there seems to be no way to differentiate between the last two server events and the client events ...
 server_events = ["notifyserveredited", "notifycliententerview", "notifyclientleftview"]
 text_events = ["notifytextmessage"]
 channel_events = ["notifycliententerview", "notifyclientleftview", "notifyclientmoved", "notifychanneldescriptionchanged", "notifychanneledited"]
+
+class ReasonID(IntEnum):
+    SELF_JOINED = 0
+    MOVED = 1
+    TIMEOUT = 3
+    CHANNEL_KICK = 4
+    SERVER_KICK = 5
+    BAN = 6
+    LEFT = 8
+    EDITED = 10
+    SERVER_SHUTDOWN = 11
 
 class TS3Event(object):
     """
@@ -51,7 +63,13 @@ class EventParser(object):
             parsed_event = ClientEnteredEvent(event)
             return parsed_event
         elif "notifyclientleftview" == event_type:
-            parsed_event = ClientLeftEvent(event)
+            reason_id = int(event["reasonid"])
+            if reason_id == int(ReasonID.SERVER_KICK):
+                parsed_event = ClientKickedEvent(event)
+            elif reason_id == int(ReasonID.BAN):
+                parsed_event = ClientBannedEvent(event)
+            else:
+                parsed_event = ClientLeftEvent(event)
             return parsed_event
         elif "notifychanneldescriptionchanged" == event_type:
             parsed_event = ChannelDescriptionEditedEvent(event)
@@ -168,6 +186,7 @@ class ClientEnteredEvent(TS3Event):
             self._client_is_recording = data.get('client_is_recording', '')
             self._client_dbid = data.get('client_database_id', '')
             self._client_servergroups = data.get('client_servergroups', '')
+            self._client_channel_group_id = int(data.get('client_channel_group_id', '-1'))
         except:
             self._logger.error("Failed to parse ClientEnterEvent:")
             self._logger.error(data)
@@ -248,6 +267,10 @@ class ClientEnteredEvent(TS3Event):
     def client_servergroups(self):
         return self._client_servergroups
 
+    @property
+    def client_channel_group_id(self):
+        return self._client_channel_group_id
+
 
 class ClientLeftEvent(TS3Event):
     def __init__(self, data):
@@ -274,6 +297,33 @@ class ClientLeftEvent(TS3Event):
     def reason_msg(self):
         return self._reason_msg
 
+class ClientKickedEvent(ClientLeftEvent):
+    def __init__(self, data):
+        super(ClientKickedEvent, self).__init__(data)
+        self._invoker_id = int(data.get('invokerid', '-1'))
+        self._invoker_name = data.get('invokername', '')
+        self._invoker_uid = data.get('invokeruid', '')
+
+    @property
+    def invoker_id(self):
+        return self._invoker_id
+
+    @property
+    def invoker_name(self):
+        return self._invoker_name
+
+    @property
+    def invoker_uid(self):
+        return self._invoker_uid
+
+class ClientBannedEvent(ClientKickedEvent):
+    def __init__(self, data):
+        super(ClientBannedEvent, self).__init__(data)
+        self._ban_time = int(data.get("bantime", '-1'))
+
+    @property
+    def ban_time(self):
+        return self._ban_time
 
 class ClientMovedEvent(TS3Event):
     def __init__(self, data):
