@@ -22,6 +22,30 @@ def on_event(sender, **kw):
     """
     # Get the parsed event from the dictionary
     event = kw["event"]
+    print(type(event))
+    """
+    # This generates output for every event. Remove the comment if you want more output
+    for attr, value in event.__dict__.items():
+        print("\t"+attr+":", value)
+    """
+    if isinstance(event, Events.ClientBannedEvent):
+        print("Client was banned!")
+        print("\tClient ID:", event.client_id)
+        print("\tReason Message:", event.reason_msg)
+        print("\tInvokerID:", event.invoker_id)
+        print("\tInvokerName:", event.invoker_name)
+        print("\tBantime:", event.ban_time)
+    if isinstance(event, Events.ClientKickedEvent):
+        print("Client was kicked!")
+        print("\tClient ID:", event.client_id)
+        print("\tReason Message:", event.reason_msg)
+        print("\tInvokerID:", event.invoker_id)
+        print("\tInvokerName:", event.invoker_name)
+
+    if isinstance(event, Events.ClientLeftEvent):
+        print("Client left!")
+        print("\tClient ID:", event.client_id)
+        print("\tReason Message:", event.reason_msg)
     if type(event) is Events.TextMessageEvent:
         # Prevent the client from sending messages to itself
         if event.invoker_id != int(ts3conn.whoami()["client_id"]):
@@ -43,7 +67,10 @@ ts3conn.clientmove(channel, int(ts3conn.whoami()["client_id"]))
 ts3conn.register_for_server_events(on_event) 
 # Register for private messages
 ts3conn.register_for_private_messages(on_event)
+# Register for channel message in botchannel
+ts3conn.register_for_channel_events(channel, on_event) 
 # Start the loop to send connection keepalive messages
 ts3conn.start_keepalive_loop()
 ```
+
 For a more elaborated example of this API see the ts3Bot project: https://github.com/Murgeye/ts3Bot
