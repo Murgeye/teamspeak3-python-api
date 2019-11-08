@@ -4,6 +4,8 @@ import socket
 import logging
 import threading
 import time
+import sys
+import traceback
 
 from . import Events
 import blinker
@@ -428,15 +430,25 @@ class TS3Connection(object):
             return resp
         # Events
         elif resp.startswith(b'notify'):
-            resp = resp.decode(encoding='UTF-8').split(" ")
-            event_type = resp[0]
-            event = dict()
-            for info in resp[1:]:
-                split = info.split('=', 1)
-                if len(split) == 2:
-                    key, value = split
-                    event[key] = utilities.unescape(value)
-            event = Events.EventParser.parse_event(event, event_type)
+            try:
+                resp = resp.decode(encoding='UTF-8').split(" ")
+                event_type = resp[0]
+                event = dict()
+                for info in resp[1:]:
+                    split = info.split('=', 1)
+                    if len(split) == 2:
+                        key, value = split
+                        event[key] = utilities.unescape(value)
+                event = Events.EventParser.parse_event(event, event_type)
+            except:
+                self._logger.error("Error parsing event")
+                self._logger.error(resp)
+                self._logger.error(str(event) + "," + str(event_type))
+                self._logger.error("\n\n")
+                self._logger.error("Uncaught exception:" + str(sys.exc_info()[0]))
+                self._logger.error(str(sys.exc_info()[1]))
+                self._logger.error(traceback.format_exc())
+                return None
             if type(event) == Events.TextMessageEvent:
                 signal = blinker.signal(event_type+"_"+event.targetmode.lower())
             else:

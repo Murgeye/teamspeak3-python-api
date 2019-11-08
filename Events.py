@@ -27,10 +27,6 @@ class TS3Event(object):
     def __init__(self, data):
         self._data = data
         self._logger = logging.getLogger(__name__)
-        self._logger.setLevel(logging.DEBUG)
-        # create console handler and set level to debug
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
 
     @property
     def data(self):
@@ -49,7 +45,6 @@ class EventParser(object):
         :return: Parsed Event
         :rtype: TS3Event
         """
-        # data = event.data[0].decode(encoding='UTF-8').split(" ")
         if "notifytextmessage" == event_type:
             parsed_event = TextMessageEvent(event)
             return parsed_event
@@ -63,7 +58,7 @@ class EventParser(object):
             parsed_event = ClientEnteredEvent(event)
             return parsed_event
         elif "notifyclientleftview" == event_type:
-            reason_id = int(event["reasonid"])
+            reason_id = int(event.get("reasonid", '-1'))
             if reason_id == int(ReasonID.SERVER_KICK):
                 parsed_event = ClientKickedEvent(event)
             elif reason_id == int(ReasonID.BAN):
