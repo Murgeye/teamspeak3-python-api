@@ -88,7 +88,7 @@ class EventParser(object):
         elif EventType.CHANNEL_EDITED.value == event_type:
             parsed_event = ChannelEditedEvent(event)
             return parsed_event
-        elif EventType.SERVER_EDITED == event_type:
+        elif EventType.SERVER_EDITED.value == event_type:
             parsed_event = ServerEditedEvent(event)
             return parsed_event
         else:

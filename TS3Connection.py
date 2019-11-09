@@ -237,7 +237,7 @@ class TS3Connection(object):
         self._send("servernotifyregister", ["event=textserver"])
         if event_listener is not None:
             for event in Events.text_events:
-                blinker.signal(event.value+"_server").connect(event_listener, weak=weak_ref)
+                blinker.signal(event.name+"_server").connect(event_listener, weak=weak_ref)
 
     def register_for_channel_messages(self, event_listener=None, weak_ref=True):
         """
@@ -252,7 +252,7 @@ class TS3Connection(object):
         self._send("servernotifyregister", ["event=textchannel"])
         if event_listener is not None:
             for event in Events.text_events:
-                blinker.signal(event.value+"_channel").connect(event_listener, weak=weak_ref)
+                blinker.signal(event.name+"_channel").connect(event_listener, weak=weak_ref)
 
     def register_for_private_messages(self, event_listener=None, weak_ref=True):
         """
