@@ -7,7 +7,7 @@ import time
 import sys
 import traceback
 
-from ts3.Events import TS3Event
+from .Events import TS3Event
 from . import Events
 import blinker
 from . import utilities
@@ -288,11 +288,14 @@ class TS3Connection(object):
         Register event_listener for receiving channel_events.
         :param event_listener: Blinker signal handler function to be informed: on_event(sender, **kw), kw will contain
         the event
-        :param weak_ref: Use weak refs for blinker, causing eventlisteners that go out of scope to be removed (breaks nested functions)
+        :param channel_id: Channel to register to
+        :param weak_ref: Use weak refs for blinker, causing event_listeners that go out of scope to be removed
+        (breaks nested functions)
+        :type channel_id: int | string
         :type event_listener: (str, dict[str, any]) -> None
         :type weak_ref: bool
         """
-        self._send("servernotifyregister", ["event=channel", "id="+channel_id])
+        self._send("servernotifyregister", ["event=channel", "id="+str(channel_id)])
         if event_listener is not None:
             for event in Events.channel_events:
                 blinker.signal(event.name).connect(event_listener, weak=weak_ref)

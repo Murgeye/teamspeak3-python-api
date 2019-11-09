@@ -1,8 +1,8 @@
 from unittest import TestCase
 import logging
 
-from ts3.Events import ClientLeftEvent, ReasonID, ClientKickedEvent, ClientBannedEvent
-from ts3.TS3Connection import TS3Connection
+from .Events import ClientLeftEvent, ReasonID, ClientKickedEvent, ClientBannedEvent
+from .TS3Connection import TS3Connection
 
 
 class MockTS3Connection(TS3Connection):

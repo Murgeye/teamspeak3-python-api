@@ -1,5 +1,6 @@
 from enum import IntEnum
 
+
 class TS3QueryExceptionType(IntEnum):
     OK = 0
     UNDEFINED = 1
