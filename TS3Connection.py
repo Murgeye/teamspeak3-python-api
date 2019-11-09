@@ -7,6 +7,7 @@ import time
 import sys
 import traceback
 
+from ts3.Events import TS3Event
 from . import Events
 import blinker
 from . import utilities
@@ -172,6 +173,15 @@ class TS3Connection(object):
             self._logger.debug("Response: " + str(resp))
             data = self._parse_resp(resp)
             self._logger.debug("Data: " + str(data))
+            if isinstance(data, TS3Event):
+                event = data
+                if isinstance(event, Events.TextMessageEvent):
+                    signal = blinker.signal(event.event_type.name+"_"+event.targetmode.lower())
+                else:
+                    signal = blinker.signal(event.event_type.name)
+                self._logger.debug("Sending signal")
+                threading.Thread(target=signal.send, kwargs={'event': event}).start()
+                continue
             if data is not None:
                 self._data_read.wait()
                 self._data = data
@@ -227,7 +237,7 @@ class TS3Connection(object):
         self._send("servernotifyregister", ["event=textserver"])
         if event_listener is not None:
             for event in Events.text_events:
-                blinker.signal(event+"_server").connect(event_listener, weak=weak_ref)
+                blinker.signal(event.value+"_server").connect(event_listener, weak=weak_ref)
 
     def register_for_channel_messages(self, event_listener=None, weak_ref=True):
         """
@@ -242,7 +252,7 @@ class TS3Connection(object):
         self._send("servernotifyregister", ["event=textchannel"])
         if event_listener is not None:
             for event in Events.text_events:
-                blinker.signal(event+"_channel").connect(event_listener, weak=weak_ref)
+                blinker.signal(event.value+"_channel").connect(event_listener, weak=weak_ref)
 
     def register_for_private_messages(self, event_listener=None, weak_ref=True):
         """
@@ -257,7 +267,7 @@ class TS3Connection(object):
         self._send("servernotifyregister", ["event=textprivate"])
         if event_listener is not None:
             for event in Events.text_events:
-                blinker.signal(event+"_private").connect(event_listener, weak=weak_ref)
+                blinker.signal(event.name+"_private").connect(event_listener, weak=weak_ref)
 
     def register_for_server_events(self, event_listener=None, weak_ref=True):
         """
@@ -271,7 +281,7 @@ class TS3Connection(object):
         self._send("servernotifyregister", ["event=server"])
         if event_listener is not None:
             for event in Events.server_events:
-                blinker.signal(event).connect(event_listener, weak=weak_ref)
+                blinker.signal(event.name).connect(event_listener, weak=weak_ref)
 
     def register_for_channel_events(self, channel_id, event_listener=None, weak_ref=True):
         """
@@ -285,7 +295,7 @@ class TS3Connection(object):
         self._send("servernotifyregister", ["event=channel", "id="+channel_id])
         if event_listener is not None:
             for event in Events.channel_events:
-                blinker.signal(event).connect(event_listener, weak=weak_ref)
+                blinker.signal(event.name).connect(event_listener, weak=weak_ref)
 
     def clientmove(self, channel_id, client_id):
         """
@@ -440,6 +450,7 @@ class TS3Connection(object):
                         key, value = split
                         event[key] = utilities.unescape(value)
                 event = Events.EventParser.parse_event(event, event_type)
+                return event
             except:
                 self._logger.error("Error parsing event")
                 self._logger.error(resp)
@@ -449,13 +460,6 @@ class TS3Connection(object):
                 self._logger.error(str(sys.exc_info()[1]))
                 self._logger.error(traceback.format_exc())
                 return None
-            if type(event) == Events.TextMessageEvent:
-                signal = blinker.signal(event_type+"_"+event.targetmode.lower())
-            else:
-                signal = blinker.signal(event_type)
-            self._logger.debug("Sending signal")
-            threading.Thread(target=signal.send, kwargs={'event': event}).start()
-            return None
         # Query-Responses and other things(What could these be?)
         else:
             return resp
