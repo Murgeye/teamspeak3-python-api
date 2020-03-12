@@ -39,3 +39,6 @@ def unescape(raw):
 
 class TS3Exception(Exception):
     pass
+
+class TS3ConnectionClosedException(Exception):
+    pass

@@ -11,7 +11,7 @@ from .Events import TS3Event
 from . import Events
 import blinker
 from . import utilities
-from .utilities import TS3Exception
+from .utilities import TS3Exception, TS3ConnectionClosedException
 from .TS3QueryExceptionType import TS3QueryExceptionType
 
 
@@ -21,7 +21,7 @@ class TS3Connection(object):
     Teamspeak 3 server.
     """
     def __init__(self, host="127.0.0.1", port=10011, log_file="api.log", use_ssh=False, username=None, password=None,
-                 accept_all_keys=False, host_key_file=None, use_system_hosts=False):
+                 accept_all_keys=False, host_key_file=None, use_system_hosts=False, sshtimeout=None, sshtimeoutlimit=3):
         """
         Creates a new TS3Connection.
         :param host: Host to connect to. Can be an IP address or a hostname.
@@ -34,6 +34,7 @@ class TS3Connection(object):
         self._is_ssh = use_ssh
         self._conn_lock = threading.Lock()
         self._logger = logging.getLogger(__name__)
+        self._logger.propagate = 0
         self._logger.setLevel(logging.WARNING)
         self.stop_recv = threading.Event()
         self._new_data = threading.Event()
@@ -59,7 +60,7 @@ class TS3Connection(object):
             self._logger.debug(self._conn.read_until(b"\n\r"))
         else:
             from .SSHConnWrapper import SSHConnWrapper
-            self._conn = SSHConnWrapper(host, port, username, password, accept_all_keys=accept_all_keys, host_key_file=host_key_file)
+            self._conn = SSHConnWrapper(host, port, username, password, accept_all_keys=accept_all_keys, host_key_file=host_key_file, timeout=sshtimeout, timeout_limit=sshtimeoutlimit)
             self._logger.debug(self._conn.read_until(b"\n\r"))
             self._logger.debug(self._conn.read_until(b"\n\r"))
         threading.Thread(target=self._recv).start()
@@ -127,31 +128,37 @@ class TS3Connection(object):
         query += "\n\r"
         query = query.encode()
         resp = None
-        if self._conn_lock.acquire():
-            if not query == b'\n\r' or query == b'\n\r' and log_keepalive:
-                self._logger.debug("Query: " + str(query))
-            self._conn.write(query)
-            if not wait_for_resp:
-                self._conn_lock.release()
-                return
-            while not ack:
-                while resp is None:
-                    self._new_data.wait()
-                    resp = self._data
-                    self._new_data.clear()
-                    self._data_read.set()
-                    if resp is not None:
-                        if resp[0] == b'error':
-                            ack = True
-                            if resp[1] != b'id=0':
-                                self._conn_lock.release()
-                                raise TS3QueryException(int(resp[1].decode(encoding='UTF-8').split("=", 1)[1]), resp[2].
-                                                        decode(encoding='UTF-8').split("=", 1)[1])
-                        else:
-                            self._logger.debug("Resp: " + str(resp))
-                            saved_resp += resp
-                            resp = None
-        self._conn_lock.release()
+        try:
+            self._logger.debug("Trying to acquire lock")
+            if self._conn_lock.acquire():
+                self._logger.debug("Lock acquired")
+                if not query == b'\n\r' or query == b'\n\r' and log_keepalive:
+                    self._logger.debug("Query: " + str(query))
+                self._logger.debug("Writing to connection")
+                self._conn.write(query)
+                self._logger.debug("Written to connection")
+                if not wait_for_resp:
+                    self._conn_lock.release()
+                    return
+                while not ack:
+                    while resp is None:
+                        self._new_data.wait()
+                        resp = self._data
+                        self._new_data.clear()
+                        self._data_read.set()
+                        if resp is not None:
+                            if resp[0] == b'error':
+                                ack = True
+                                if resp[1] != b'id=0':
+                                    raise TS3QueryException(int(resp[1].decode(encoding='UTF-8').split("=", 1)[1]), resp[2].
+                                                            decode(encoding='UTF-8').split("=", 1)[1])
+                            else:
+                                self._logger.debug("Resp: " + str(resp))
+                                saved_resp += resp
+                                resp = None
+        finally:
+            self._conn_lock.release()
+            self._logger.debug("Lock released")
         self._logger.debug("Saved resp:" + str(saved_resp))
         return saved_resp
 
@@ -163,13 +170,23 @@ class TS3Connection(object):
         """
         while not self.stop_recv.is_set():
             try:
+                self._logger.debug("Read until started")
                 resp = self._conn.read_until(b"\n\r")[:-2]
-            except EOFError:
+                self._logger.debug("Read until ended")
+            except (EOFError, TS3ConnectionClosedException) as e:
+                self._logger.exception("Connection closed")
                 if self.stop_recv.is_set():
                     self._conn.close()
                     return
-                else:
-                    raise TS3Exception("Connection was closed!")
+                self._new_data.set()
+                self.stop_recv.set()
+                try:
+                    self._conn.close()
+                    self._logger.debug("Releasing lock for closed connection to unfreeze threads ...")
+                    self._conn_lock.release()
+                except:
+                    pass
+                continue
             self._logger.debug("Response: " + str(resp))
             data = self._parse_resp(resp)
             self._logger.debug("Data: " + str(data))
