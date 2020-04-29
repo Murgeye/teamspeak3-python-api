@@ -554,7 +554,7 @@ class TS3Connection(object):
                               + ['{}={}'.format(x[0], x[1]) for x in kwargs.items()])
             if resp:
                 parsed_resp = self._parse_resp_to_list_of_dicts(resp)
-                return parsed_resp[0] if len(parsed_resp) is 1 else parsed_resp
+                return parsed_resp[0] if len(parsed_resp) == 1 else parsed_resp
 
         return wrapper
 
