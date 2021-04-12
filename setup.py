@@ -7,4 +7,5 @@
 # Distributed under terms of the MIT license.
 
 import setuptools
+
 setuptools.setup()

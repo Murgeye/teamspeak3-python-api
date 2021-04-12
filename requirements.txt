@@ -1,1 +1,2 @@
 blinker==1.4
+paramiko[ssh]

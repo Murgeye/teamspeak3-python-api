@@ -16,10 +16,12 @@ class EventType(Enum):
     UNKNOWN = None
 
 
-# Sadly, there seems to be no way to differentiate between the last two server events and the client events ...
+# Sadly, there seems to be no way to differentiate between the last two server events and the
+# client events ...
 server_events = [EventType.SERVER_EDITED, EventType.CLIENT_ENTER, EventType.CLIENT_LEFT]
 text_events = [EventType.TEXT_MESSAGE]
-channel_events = [EventType.CLIENT_ENTER, EventType.CLIENT_LEFT, EventType.CLIENT_MOVED, EventType.CHANNEL_DESC_CHANGED, EventType.CHANNEL_EDITED]
+channel_events = [EventType.CLIENT_ENTER, EventType.CLIENT_LEFT, EventType.CLIENT_MOVED,
+                  EventType.CHANNEL_DESC_CHANGED, EventType.CHANNEL_EDITED]
 
 
 class ReasonID(IntEnum):
@@ -34,7 +36,7 @@ class ReasonID(IntEnum):
     SERVER_SHUTDOWN = 11
 
 
-class TS3Event(object):
+class TS3Event():
     """
     Event class for Teamspeak 3 events. This is a stub for all other events.
     """
@@ -49,7 +51,7 @@ class TS3Event(object):
         return self._data
 
 
-class EventParser(object):
+class EventParser():
     @staticmethod
     def parse_event(event, event_type):
         """
@@ -64,16 +66,16 @@ class EventParser(object):
         if EventType.TEXT_MESSAGE.value == event_type:
             parsed_event = TextMessageEvent(event)
             return parsed_event
-        elif EventType.CLIENT_MOVED.value == event_type:
+        if EventType.CLIENT_MOVED.value == event_type:
             if 'invokerid' in event:
                 parsed_event = ClientMovedEvent(event)
             else:
                 parsed_event = ClientMovedSelfEvent(event)
             return parsed_event
-        elif EventType.CLIENT_ENTER.value == event_type:
+        if EventType.CLIENT_ENTER.value == event_type:
             parsed_event = ClientEnteredEvent(event)
             return parsed_event
-        elif EventType.CLIENT_LEFT.value == event_type:
+        if EventType.CLIENT_LEFT.value == event_type:
             reason_id = int(event.get("reasonid", '-1'))
             if reason_id == int(ReasonID.SERVER_KICK) or reason_id == int(ReasonID.CHANNEL_KICK):
                 parsed_event = ClientKickedEvent(event)
@@ -82,25 +84,24 @@ class EventParser(object):
             else:
                 parsed_event = ClientLeftEvent(event)
             return parsed_event
-        elif EventType.CHANNEL_DESC_CHANGED.value == event_type:
+        if EventType.CHANNEL_DESC_CHANGED.value == event_type:
             parsed_event = ChannelDescriptionEditedEvent(event)
             return parsed_event
-        elif EventType.CHANNEL_EDITED.value == event_type:
+        if EventType.CHANNEL_EDITED.value == event_type:
             parsed_event = ChannelEditedEvent(event)
             return parsed_event
-        elif EventType.SERVER_EDITED.value == event_type:
+        if EventType.SERVER_EDITED.value == event_type:
             parsed_event = ServerEditedEvent(event)
             return parsed_event
-        else:
-            logging.warning("Unknown event! " + str(event_type))
-            return None
+        logging.warning("Unknown event! %s", str(event_type))
+        return None
 
 
 class ServerEditedEvent(TS3Event):
     event_type = EventType.SERVER_EDITED
 
     def __init__(self, data):
-        super(ServerEditedEvent, self).__init__(data)
+        super().__init__(data)
         self._reason_id = data.get("reasonid", "")
         del data["reasonid"]
         self._invoker_id = data.get("invokerid", "-1")
@@ -136,7 +137,7 @@ class ChannelEditedEvent(TS3Event):
     event_type = EventType.CHANNEL_EDITED
 
     def __init__(self, data):
-        super(ChannelEditedEvent, self).__init__(data)
+        super().__init__(data)
         self._channel_id = data.get('cid', '-1')
         self._channel_topic = data.get('channel_topic', '')
         self._invoker_id = data.get('invokerid', '-1')
@@ -173,7 +174,7 @@ class ChannelDescriptionEditedEvent(TS3Event):
     event_type = EventType.CHANNEL_DESC_CHANGED
 
     def __init__(self, data):
-        super(ChannelDescriptionEditedEvent, self).__init__(data)
+        super().__init__(data)
         self._channel_id = int(data.get('cid', '-1'))
 
     @property
@@ -185,7 +186,7 @@ class ClientEnteredEvent(TS3Event):
     event_type = EventType.CLIENT_ENTER
 
     def __init__(self, data):
-        super(ClientEnteredEvent, self).__init__(data)
+        super().__init__(data)
         try:
             self._client_id = int(data.get('clid', '-1'))
             self._client_name = data.get('client_nickname', '')
@@ -210,7 +211,7 @@ class ClientEnteredEvent(TS3Event):
             self._logger.error("Failed to parse ClientEnterEvent:")
             self._logger.error(data)
             self._logger.error("\n\n")
-            self._logger.error("Uncaught exception:" + str(sys.exc_info()[0]))
+            self._logger.error("Uncaught exception: %s", str(sys.exc_info()[0]))
             self._logger.error(str(sys.exc_info()[1]))
             self._logger.error(traceback.format_exc())
 
@@ -295,7 +296,7 @@ class ClientLeftEvent(TS3Event):
     event_type = EventType.CLIENT_LEFT
 
     def __init__(self, data):
-        super(ClientLeftEvent, self).__init__(data)
+        super().__init__(data)
         self._client_id = int(data.get('clid', '-1'))
         self._target_channel_id = int(data.get('ctid', '-1'))
         self._from_channel_id = int(data.get('cfid', '-1'))
@@ -321,7 +322,7 @@ class ClientLeftEvent(TS3Event):
 
 class ClientKickedEvent(ClientLeftEvent):
     def __init__(self, data):
-        super(ClientKickedEvent, self).__init__(data)
+        super().__init__(data)
         self._invoker_id = int(data.get('invokerid', '-1'))
         self._invoker_name = data.get('invokername', '')
         self._invoker_uid = data.get('invokeruid', '')
@@ -341,7 +342,7 @@ class ClientKickedEvent(ClientLeftEvent):
 
 class ClientBannedEvent(ClientKickedEvent):
     def __init__(self, data):
-        super(ClientBannedEvent, self).__init__(data)
+        super().__init__(data)
         self._ban_time = int(data.get("bantime", '-1'))
 
     @property
@@ -353,7 +354,7 @@ class ClientMovedEvent(TS3Event):
     event_type = EventType.CLIENT_MOVED
 
     def __init__(self, data):
-        super(ClientMovedEvent, self).__init__(data)
+        super().__init__(data)
         self._client_id = int(data.get('clid', '-1'))
         self._target_channel_id = int(data.get('ctid', '-1'))
         self._reason_id = int(data.get('reasonid', '-1'))
@@ -390,7 +391,7 @@ class ClientMovedSelfEvent(TS3Event):
     event_type = EventType.CLIENT_MOVED
 
     def __init__(self, data):
-        super(ClientMovedSelfEvent, self).__init__(data)
+        super().__init__(data)
         self._client_id = int(data.get('clid', '-1'))
         self._target_channel_id = int(data.get('ctid', '-1'))
         self._reason_id = int(data.get('reasonid', '-1'))
@@ -412,7 +413,7 @@ class TextMessageEvent(TS3Event):
     event_type = EventType.TEXT_MESSAGE
 
     def __init__(self, data):
-        super(TextMessageEvent, self).__init__(data)
+        super().__init__(data)
         if data.get('targetmode') == '1':
             self._targetmode = 'Private'
             self._target = data.get('target')
@@ -450,5 +451,4 @@ class TextMessageEvent(TS3Event):
     def target(self):
         if self.targetmode == 'Private':
             return self._target
-        else:
-            return None
+        return None

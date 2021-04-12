@@ -1,5 +1,5 @@
-from unittest import TestCase
 import logging
+from unittest import TestCase
 
 from .Events import ClientLeftEvent, ReasonID, ClientKickedEvent, ClientBannedEvent
 from .TS3Connection import TS3Connection
@@ -24,15 +24,15 @@ class TestTS3Connection(TestCase):
         self.assertEqual(result.client_id, 1, "ClientLeft not parsed correctly")
 
     def test_parse_resp_kicked_event(self):
-        resp = b"notifyclientleftview cfid=1 ctid=0 reasonid=" + str(ReasonID.SERVER_KICK.value).encode("ascii") +\
-               b" reasonmsg=Kicked. clid=1"
+        resp = b"notifyclientleftview cfid=1 ctid=0 reasonid=" + str(
+            ReasonID.SERVER_KICK.value).encode("ascii") + b" reasonmsg=Kicked. clid=1"
         result = self.conn._parse_resp(resp)
         self.assertIs(ClientKickedEvent, type(result), "Client kick not parsed correctly")
         self.assertEqual(1, result.client_id, "Client kick not parsed correctly")
 
     def test_parse_banned_event(self):
-        resp = b"notifyclientleftview cfid=1 ctid=0 reasonid=" + str(ReasonID.BAN.value).encode("ascii") + \
-               b" reasonmsg=Kicked. clid=1 bantime=10 invokerid=2 invokername=Test invokeruid=sdfsadf"
+        resp = b"notifyclientleftview cfid=1 ctid=0 reasonid=" + str(ReasonID.BAN.value).encode(
+            "ascii") + b" reasonmsg=Kicked. clid=1 bantime=10 invokerid=2 invokername=Test invokeruid=sdfsadf"
         result = self.conn._parse_resp(resp)
         self.assertIs(ClientBannedEvent, type(result), "Client ban not parsed correctly")
         self.assertEqual(1, result.client_id, "Client ban not parsed correctly")
@@ -44,7 +44,8 @@ class TestTS3Connection(TestCase):
     def test_parse_resp_left_event_missing_reason_id(self):
         resp = b"notifyclientleftview reasonmsg=Left. clid=1"
         result = self.conn._parse_resp(resp)
-        self.assertIs(ClientLeftEvent, type(result), "ClientLeft without reason id not parsed correctly")
+        self.assertIs(ClientLeftEvent, type(result),
+                      "ClientLeft without reason id not parsed correctly")
         self.assertEqual(1, result.client_id, "ClientLeft without reason id not parsed correctly")
 
     def test_parse_resp_left_event_empty(self):

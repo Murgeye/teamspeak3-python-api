@@ -1,27 +1,30 @@
 """Main TS3Api File"""
-import telnetlib
-import socket
 import logging
+import socket
+import sys
+import telnetlib
 import threading
 import time
-import sys
 import traceback
 
-from .Events import TS3Event
-from . import Events
 import blinker
+
+from . import Events
 from . import utilities
-from .utilities import TS3Exception, TS3ConnectionClosedException
+from .Events import TS3Event
 from .TS3QueryExceptionType import TS3QueryExceptionType
+from .utilities import TS3Exception, TS3ConnectionClosedException
 
 
-class TS3Connection(object):
+class TS3Connection:
     """
-    Connection class for the TS3 API. Uses a telnet connection to send messages to and receive messages from the
-    Teamspeak 3 server.
+    Connection class for the TS3 API. Uses a telnet connection to send messages to and receive
+    messages from the Teamspeak 3 server.
     """
-    def __init__(self, host="127.0.0.1", port=10011, log_file="api.log", use_ssh=False, username=None, password=None,
-                 accept_all_keys=False, host_key_file=None, use_system_hosts=False, sshtimeout=None, sshtimeoutlimit=3):
+
+    def __init__(self, host="127.0.0.1", port=10011, log_file="api.log", use_ssh=False,
+                 username=None, password=None, accept_all_keys=False, host_key_file=None,
+                 use_system_hosts=False, sshtimeout=None, sshtimeoutlimit=3):
         """
         Creates a new TS3Connection.
         :param host: Host to connect to. Can be an IP address or a hostname.
@@ -60,7 +63,11 @@ class TS3Connection(object):
             self._logger.debug(self._conn.read_until(b"\n\r"))
         else:
             from .SSHConnWrapper import SSHConnWrapper
-            self._conn = SSHConnWrapper(host, port, username, password, accept_all_keys=accept_all_keys, host_key_file=host_key_file, timeout=sshtimeout, timeout_limit=sshtimeoutlimit)
+            self._conn = SSHConnWrapper(host, port, username, password,
+                                        accept_all_keys=accept_all_keys,
+                                        host_key_file=host_key_file, timeout=sshtimeout,
+                                        timeout_limit=sshtimeoutlimit,
+                                        use_system_hosts=use_system_hosts)
             self._logger.debug(self._conn.read_until(b"\n\r"))
             self._logger.debug(self._conn.read_until(b"\n\r"))
         threading.Thread(target=self._recv).start()
@@ -93,25 +100,26 @@ class TS3Connection(object):
         Get a clientlist from the server.
         :param params: List of parameters strings to use.
         :type params: list[str]
-        :return:
+        :return: List of clients
         """
         if params is None:
             params = []
         args = list()
-        for p in params:
-            args.append("-" + p)
+        for param in params:
+            args.append("-" + param)
         clist = self._send("clientlist", args)
         clients = TS3Connection._parse_resp_to_list_of_dicts(clist)
         if len(clients) == 0:
-            self._logger.warning("Clientlist empty" + str(clist))
+            self._logger.warning("Clientlist empty %s", str(clist))
         return clients
 
-    def _send(self, command, args=list(), wait_for_resp=True, log_keepalive=False):
+    def _send(self, command, args=None, wait_for_resp=True, log_keepalive=False):
         """
         :param command: Command to send.
         :param args: Parameter to send, will be escaped.
-        :param wait_for_resp: True: Expects at least a error line and blocks until one is received. False:
-                Almost exclusively for keepalive, doesn't wait for an acknowledgment.
+        :param wait_for_resp: True: Expects at least a error line and blocks until one is received.
+                              False: Almost exclusively for keepalive, doesn't wait for an
+                                     acknowledgment.
         :param log_keepalive: Should keepalive messages be logged?
         :return: Query response, if one was received.
         :rtype: bytes | None
@@ -123,6 +131,8 @@ class TS3Connection(object):
         query = command
         saved_resp = b''
         ack = False
+        if args is None:
+            args = []
         for arg in args:
             query += " " + utilities.escape(arg)
         query += "\n\r"
@@ -133,13 +143,13 @@ class TS3Connection(object):
             if self._conn_lock.acquire():
                 self._logger.debug("Lock acquired")
                 if not query == b'\n\r' or query == b'\n\r' and log_keepalive:
-                    self._logger.debug("Query: " + str(query))
+                    self._logger.debug("Query: %s", str(query))
                 self._logger.debug("Writing to connection")
                 self._conn.write(query)
                 self._logger.debug("Written to connection")
                 if not wait_for_resp:
                     self._conn_lock.release()
-                    return
+                    return None
                 while not ack:
                     while resp is None:
                         self._new_data.wait()
@@ -150,21 +160,23 @@ class TS3Connection(object):
                             if resp[0] == b'error':
                                 ack = True
                                 if resp[1] != b'id=0':
-                                    raise TS3QueryException(int(resp[1].decode(encoding='UTF-8').split("=", 1)[1]), resp[2].
-                                                            decode(encoding='UTF-8').split("=", 1)[1])
+                                    raise TS3QueryException(
+                                        int(resp[1].decode(encoding='UTF-8').split("=", 1)[1]),
+                                        resp[2].decode(encoding='UTF-8').split("=", 1)[1])
                             else:
-                                self._logger.debug("Resp: " + str(resp))
+                                self._logger.debug("Resp: %s", str(resp))
                                 saved_resp += resp
                                 resp = None
         finally:
             self._conn_lock.release()
             self._logger.debug("Lock released")
-        self._logger.debug("Saved resp:" + str(saved_resp))
+        self._logger.debug("Saved resp: %s", str(saved_resp))
         return saved_resp
 
     def _recv(self):
         """
-        Actual receiving, receives until \n\r is encountered. \n\r is cut from the end of the response.
+        Actual receiving, receives until \n\r is encountered. \n\r is cut from the end of the
+        response.
         :return: Parsed response, split by " " or None if received message was an event.
         :rtype: bytes | None
         """
@@ -173,7 +185,7 @@ class TS3Connection(object):
                 self._logger.debug("Read until started")
                 resp = self._conn.read_until(b"\n\r")[:-2]
                 self._logger.debug("Read until ended")
-            except (EOFError, TS3ConnectionClosedException) as e:
+            except (EOFError, TS3ConnectionClosedException) as _:
                 self._logger.exception("Connection closed")
                 if self.stop_recv.is_set():
                     self._conn.close()
@@ -182,18 +194,19 @@ class TS3Connection(object):
                 self.stop_recv.set()
                 try:
                     self._conn.close()
-                    self._logger.debug("Releasing lock for closed connection to unfreeze threads ...")
+                    self._logger.debug(
+                        "Releasing lock for closed connection to unfreeze threads ...")
                     self._conn_lock.release()
                 except:
                     pass
                 continue
-            self._logger.debug("Response: " + str(resp))
+            self._logger.debug("Response: %s", str(resp))
             data = self._parse_resp(resp)
-            self._logger.debug("Data: " + str(data))
+            self._logger.debug("Data: %s", str(data))
             if isinstance(data, TS3Event):
                 event = data
                 if isinstance(event, Events.TextMessageEvent):
-                    signal = blinker.signal(event.event_type.name+"_"+event.targetmode.lower())
+                    signal = blinker.signal(event.event_type.name + "_" + event.targetmode.lower())
                 else:
                     signal = blinker.signal(event.event_type.name)
                 self._logger.debug("Sending signal")
@@ -227,7 +240,8 @@ class TS3Connection(object):
     @staticmethod
     def _parse_resp_to_list_of_dicts(resp):
         """
-        Parses multiple elements in a message into a list of dictionaries containing the info for each element.
+        Parses multiple elements in a message into a list of dictionaries containing the info for
+        each element.
         :type resp: bytes
         :param resp: Message to parse.
         :return: List of dictionaries containing the info.
@@ -236,63 +250,68 @@ class TS3Connection(object):
         # Multiple responses are split by "|"
         split_list = resp.split(b"|")
         dict_list = list()
-        for resp in split_list:
-            if len(resp) > 0:
-                dict_list.append(TS3Connection._parse_resp_to_dict(resp))
+        for response in split_list:
+            if len(response) > 0:
+                dict_list.append(TS3Connection._parse_resp_to_dict(response))
         return dict_list
 
     def register_for_server_messages(self, event_listener=None, weak_ref=True):
         """
-        Register the event_listener for server message events. Be careful, you should ignore your own messages by
-        comparing the invoker_id to your client id ...
-        :param event_listener: Blinker signal handler function to be informed: on_event(sender, **kw), kw will contain
-        the event
-        :param weak_ref: Use weak refs for blinker, causing eventlisteners that go out of scope to be removed (breaks nested functions)
+        Register the event_listener for server message events. Be careful, you should ignore your
+        own messages by comparing the invoker_id to your client id ...
+        :param event_listener: Blinker signal handler function to be informed:
+                               on_event(sender, **kw), kw will contain the event
+        :param weak_ref: Use weak refs for blinker, causing eventlisteners that go out of scope to
+                         be removed (breaks nested functions)
         :type event_listener: (str, dict[str, any]) -> None
         :type weak_ref: bool
         """
         self._send("servernotifyregister", ["event=textserver"])
         if event_listener is not None:
             for event in Events.text_events:
-                blinker.signal(event.name+"_server").connect(event_listener, weak=weak_ref)
+                blinker.signal(event.name + "_server").connect(event_listener, weak=weak_ref)
 
     def register_for_channel_messages(self, event_listener=None, weak_ref=True):
         """
-        Register the event_listener for channel message events. Be careful, you should ignore your own messages by
-        comparing the invoker_id to your client id ...
-        :param event_listener: Blinker signal handler function to be informed: on_event(sender, **kw), kw will contain
-        the event
-        :param weak_ref: Use weak refs for blinker, causing eventlisteners that go out of scope to be removed (breaks nested functions)
+        Register the event_listener for channel message events. Be careful, you should ignore your
+        own messages by comparing the invoker_id to your client id ...
+        :param event_listener: Blinker signal handler function to be informed:
+                               on_event(sender, **kw), kw will contain the event
+        :param weak_ref: Use weak refs for blinker, causing eventlisteners that go out of scope to
+                         be removed (breaks nested functions)
         :type event_listener: (str, dict[str, any]) -> None
         :type weak_ref: bool
         """
         self._send("servernotifyregister", ["event=textchannel"])
         if event_listener is not None:
             for event in Events.text_events:
-                blinker.signal(event.name+"_channel").connect(event_listener, weak=weak_ref)
+                blinker.signal(event.name + "_channel").connect(event_listener, weak=weak_ref)
 
     def register_for_private_messages(self, event_listener=None, weak_ref=True):
         """
-        Register the event_listener for private message events. Be careful, you should ignore your own messages by
-        comparing the invoker_id to your client id ...
-        :param event_listener: Blinker signal handler function to be informed: on_event(sender, **kw), kw will contain
+        Register the event_listener for private message events. Be careful, you should ignore your
+        own messages by comparing the invoker_id to your client id ...
+        :param event_listener: Blinker signal handler function to be informed:
+                               on_event(sender, **kw), kw will contain
         the event
-        :param weak_ref: Use weak refs for blinker, causing eventlisteners that go out of scope to be removed (breaks nested functions)
+        :param weak_ref: Use weak refs for blinker, causing eventlisteners that go out of scope to
+                         be removed (breaks nested functions)
         :type event_listener: (str, dict[str, any]) -> None
         :type weak_ref: bool
         """
         self._send("servernotifyregister", ["event=textprivate"])
         if event_listener is not None:
             for event in Events.text_events:
-                blinker.signal(event.name+"_private").connect(event_listener, weak=weak_ref)
+                blinker.signal(event.name + "_private").connect(event_listener, weak=weak_ref)
 
     def register_for_server_events(self, event_listener=None, weak_ref=True):
         """
         Register event_listener for receiving server_events.
-        :param event_listener: Blinker signal handler function to be informed: on_event(sender, **kw), kw will contain
-        the event
+        :param event_listener: Blinker signal handler function to be informed:
+                               on_event(sender, **kw), kw will contain the event
         :type event_listener: (str, dict[str, any]) -> None
-        :param weak_ref: Use weak refs for blinker, causing eventlisteners that go out of scope to be removed (breaks nested functions)
+        :param weak_ref: Use weak refs for blinker, causing eventlisteners that go out of scope to
+                         be removed (breaks nested functions)
         :type weak_ref: bool
         """
         self._send("servernotifyregister", ["event=server"])
@@ -303,16 +322,17 @@ class TS3Connection(object):
     def register_for_channel_events(self, channel_id, event_listener=None, weak_ref=True):
         """
         Register event_listener for receiving channel_events.
-        :param event_listener: Blinker signal handler function to be informed: on_event(sender, **kw), kw will contain
-        the event
+        :param event_listener:  Blinker signal handler function to be informed:
+                                on_event(sender, **kw), kw will contain the event
         :param channel_id: Channel to register to
-        :param weak_ref: Use weak refs for blinker, causing event_listeners that go out of scope to be removed
+        :param weak_ref:    Use weak refs for blinker, causing event_listeners that go out of scope
+                            to be removed
         (breaks nested functions)
         :type channel_id: int | string
         :type event_listener: (str, dict[str, any]) -> None
         :type weak_ref: bool
         """
-        self._send("servernotifyregister", ["event=channel", "id="+str(channel_id)])
+        self._send("servernotifyregister", ["event=channel", "id=" + str(channel_id)])
         if event_listener is not None:
             for event in Events.channel_events:
                 blinker.signal(event.name).connect(event_listener, weak=weak_ref)
@@ -325,7 +345,7 @@ class TS3Connection(object):
         :type channel_id: int
         :type client_id: int
         """
-        self._send("clientmove", ["cid="+str(channel_id), "clid="+str(client_id)])
+        self._send("clientmove", ["cid=" + str(channel_id), "clid=" + str(client_id)])
 
     def clientupdate(self, params=None):
         """
@@ -347,8 +367,8 @@ class TS3Connection(object):
         :param reason_msg: Message to send on kick, max. 40 characters
         :type reason_msg: str
         """
-        self._send("clientkick", ["clid="+str(client_id),
-            "reasonid="+str(reason_id), "reasonmsg="+str(reason_msg)])
+        self._send("clientkick", ["clid=" + str(client_id), "reasonid=" + str(reason_id),
+                                  "reasonmsg=" + str(reason_msg)])
 
     def whoami(self):
         """
@@ -357,22 +377,31 @@ class TS3Connection(object):
         :rtype: dict[str, str]
         """
         who = TS3Connection._parse_resp_to_dict(self._send("whoami", []))
-        self._logger.info("Whoami: " + str(who))
+        self._logger.info("Whoami: %s", str(who))
         return who
 
     def channellist(self, params=None):
+        """
+                Returns the channel listt.
+                :param params: Optional parameters as defined by the serverquery manual.
+                :return:  List of channels
+        """
         if params is None:
             params = []
         args = list()
-        for p in params:
-            args.append("-" + p)
+        for param in params:
+            args.append("-" + param)
         channel_list = self._send("channellist", args)
         channels = TS3Connection._parse_resp_to_list_of_dicts(channel_list)
         if len(channels) == 0:
-            self._logger.warning("Channellist empty" + str(channel_list))
+            self._logger.warning("Channellist empty %s", str(channel_list))
         return channels
 
     def channel_name_list(self):
+        """
+                    Returns a liszt of channel names. (Convenience Wrapper around channellist)
+                    :return:  List of channel names
+                  """
         names = list()
         channels = self.channellist()
         for channel in channels:
@@ -386,7 +415,8 @@ class TS3Connection(object):
         :return: List of channels.
         :rtype: list[dict[str, str]]
         """
-        return TS3Connection._parse_resp_to_list_of_dicts(self._send("channelfind", ["pattern="+pattern]))
+        return TS3Connection._parse_resp_to_list_of_dicts(
+            self._send("channelfind", ["pattern=" + pattern]))
 
     def channelfind_by_name(self, name):
         """
@@ -412,7 +442,8 @@ class TS3Connection(object):
         :type target: int
         :type msg: str
         """
-        self._send("sendtextmessage", ["targetmode="+str(targetmode), "target="+str(target), "msg="+str(msg)])
+        self._send("sendtextmessage",
+                   ["targetmode=" + str(targetmode), "target=" + str(target), "msg=" + str(msg)])
 
     def servergrouplist(self):
         """
@@ -429,10 +460,10 @@ class TS3Connection(object):
         :return: Server Group.
         :rtype: dict[str, str]
         """
-        sgl = self.servergrouplist()
-        for sg in sgl:
-            if sg["name"] == name:
-                return sg
+        server_group_list = self.servergrouplist()
+        for server_group in server_group_list:
+            if server_group["name"] == name:
+                return server_group
 
     def clientinfo(self, client_id):
         """
@@ -441,17 +472,17 @@ class TS3Connection(object):
         :return: Dictionary of client information.
         :rtype: dict[str,str]
         """
-        return self._parse_resp_to_dict(self._send("clientinfo", ["clid="+str(client_id)]))
+        return self._parse_resp_to_dict(self._send("clientinfo", ["clid=" + str(client_id)]))
 
     def _parse_resp(self, resp):
         """
-        Parses a response. Messages starting with notify... are handled as events and the listeners connected are
-        informed. Messages starting with error are split by " " and returned, all other messages will just be returned
-         and can be handled by the caller.
+        Parses a response. Messages starting with notify... are handled as events and the connected
+        listeners are informed. Messages starting with error are split by " " and returned, all
+        other messages will just be returned as is and can be handled by the caller.
         :param resp: Message to parse.
         :type resp: byte
-        :return: None if message notifies of an event, dictionary containing id and message on acknowledgements and
-        bytes on any other message.
+        :return:    None if message notifies of an event, dictionary containing id and message on
+                    acknowledgements and bytes on any other message.
         :rtype: None | dict[str, str] | bytes
         """
         # Acknowledgements
@@ -459,11 +490,12 @@ class TS3Connection(object):
             resp = resp.split(b' ')
             return resp
         # Events
-        elif resp.startswith(b'notify'):
+        if resp.startswith(b'notify'):
+            event = dict()
+            event_type = "Unknown"
             try:
                 resp = resp.decode(encoding='UTF-8').split(" ")
                 event_type = resp[0]
-                event = dict()
                 for info in resp[1:]:
                     split = info.split('=', 1)
                     if len(split) == 2:
@@ -474,9 +506,9 @@ class TS3Connection(object):
             except:
                 self._logger.error("Error parsing event")
                 self._logger.error(resp)
-                self._logger.error(str(event) + "," + str(event_type))
+                self._logger.error("%s , %s", str(event), str(event_type))
                 self._logger.error("\n\n")
-                self._logger.error("Uncaught exception:" + str(sys.exc_info()[0]))
+                self._logger.error("Uncaught exception: %s", str(sys.exc_info()[0]))
                 self._logger.error(str(sys.exc_info()[1]))
                 self._logger.error(traceback.format_exc())
                 return None
@@ -486,17 +518,19 @@ class TS3Connection(object):
 
     def _recv_wait_timeout(self, timeout=0.1):
         """
-        Like receives, but only reads for timeout seconds. If no info is received, the function returns, otherwise
-        it reads a whole line before returning. This is used for receiving notify messages.
+        Like receives, but only reads for timeout seconds. If no info is received, the function
+        returns, otherwise it reads a whole line before returning. This is used for receiving notify
+        messages.
         :param timeout: Seconds to wait before returning if no message was received.
-        :return: None if nothing was received, parsed response corresponding to _parse_resp otherwise.
+        :return:    None if nothing was received, parsed response corresponding to _parse_resp
+                    otherwise.
         :rtype: None | dict[str, str] | bytes
         """
         resp = self._conn.read_until(b"\n\r", timeout)
         if len(resp) > 0 and not resp.endswith(b"\n\r"):
             resp += self._conn.read_until(b"\n\r")[:-2]
         if len(resp) > 0:
-            self._logger.debug("No wait Response: " + str(resp))
+            self._logger.debug("No wait Response: %s", str(resp))
             return self._parse_resp(resp)
 
     def _send_keepalive(self):
@@ -507,7 +541,8 @@ class TS3Connection(object):
 
     def keepalive_loop(self, interval=5):
         """
-        Sends keepalive messages every interval seconds and checks for new messages. Runs until self.stop_recv is set.
+        Sends keepalive messages every interval seconds and checks for new messages. Runs until
+        self.stop_recv is set.
         :param interval: Seconds to wait between keepalive messages.
         :type interval: int
         """
@@ -541,6 +576,7 @@ class TS3Connection(object):
         :param item: name of the function
         :return: wrapper
         """
+
         def wrapper(*args, **kwargs):
             """
             This function sends the unknown call to ts3 like rpc.
@@ -550,8 +586,8 @@ class TS3Connection(object):
             :return: (List of) Dictionary response or nothing, depends on ts3server response
             """
             resp = self._send(item,
-                              ['-{}'.format(x) for x in args]
-                              + ['{}={}'.format(x[0], x[1]) for x in kwargs.items()])
+                              ['-{}'.format(x) for x in args] + ['{}={}'.format(x[0], x[1]) for x in
+                                                                 kwargs.items()])
             if resp:
                 parsed_resp = self._parse_resp_to_list_of_dicts(resp)
                 return parsed_resp[0] if len(parsed_resp) == 1 else parsed_resp
@@ -563,6 +599,7 @@ class TS3QueryException(TS3Exception):
     """
     Query exception class to signalize failed queries and connection errors.
     """
+
     def __init__(self, error_id, message):
         """
         Creates a new QueryException.
@@ -573,7 +610,8 @@ class TS3QueryException(TS3Exception):
         """
         self._type = TS3QueryExceptionType(error_id)
         self._msg = utilities.unescape(message)
-        super(TS3Exception, self).__init__("Query failed with id="+str(error_id)+" msg="+str(self._msg))
+        super(TS3QueryException, self).__init__(
+            "Query failed with id=" + str(error_id) + " msg=" + str(self._msg))
 
     @property
     def message(self):

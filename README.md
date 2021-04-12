@@ -1,9 +1,23 @@
 # Simple Python API for the Teamspeak 3 Server Query API
 
-Python 3 API that allows interactive access to the Teamspeak 3 Server Query 
-interface.
+Python 3 API that allows interactive access to the Teamspeak 3 Server Query interface.
+
+# Installation
+
+Either clone the GitHub repository and use local imports, or install it via `pip`:
+
+```
+pip install ts3API
+```
+
+If you want to use SSH connections also install the optional dependency Paramiko:
+
+```
+pip install paramiko
+```
 
 # Code Example
+
 ```python
 from ts3API.TS3Connection import TS3Connection
 import ts3API.Events as Events
@@ -76,12 +90,20 @@ ts3conn.start_keepalive_loop()
 For a more elaborated example of this API see the ts3Bot project: https://github.com/Murgeye/ts3Bot
 
 # Calling functions not explicitly implemented
-Thanks to Chrisg2000's contribution, the API implements any command accepted by a TeamSpeak3 server. You can call any command mentionend in the server query manual (should come with you server installation) using keyword arguments, even if it's not explicitly implemented in code. See this code snippet for example:
+
+Thanks to Chrisg2000's contribution, the API implements any command accepted by a TeamSpeak3 server.
+You can call any command mentionend in the server query manual (should come with you server
+installation) using keyword arguments, even if it's not explicitly implemented in code. See this
+code snippet for example:
 
 ```
 servergroupaddclient(sgid=servergroup_id, cldbid=client_db_id)  
 ```
-The `servergroupaddclient` command is not currently implemented explicitly. However, you can still call it if you know the parameters it need (sgid and cldbid).
+
+The `servergroupaddclient` command is not currently implemented explicitly. However, you can still
+call it if you know the parameters it need (sgid and cldbid).
 
 # Troubleshooting
-For general troubleshooting please also have a look at the troubleshooting section in https://github.com/Murgeye/ts3Bot. If any questions remain, feel free to open an issue.
+
+For general troubleshooting please also have a look at the troubleshooting section
+in https://github.com/Murgeye/ts3Bot. If any questions remain, feel free to open an issue.

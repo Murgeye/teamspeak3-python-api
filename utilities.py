@@ -1,22 +1,9 @@
 """Utility variables and functions for the TS3 API"""
 
 # FROM OLD API
-"""
-Don't change the order in this map, otherwise it might break
-"""
-_ESCAPE_MAP = [
-    ("\\", r"\\"),
-    ("/", r"\/"),
-    (" ", r"\s"),
-    ("|", r"\p"),
-    ("\a", r"\a"),
-    ("\b", r"\b"),
-    ("\f", r"\f"),
-    ("\n", r"\n"),
-    ("\r", r"\r"),
-    ("\t", r"\t"),
-    ("\v", r"\v")
-    ]
+# Don't change the order in this map, otherwise it might break!
+_ESCAPE_MAP = [("\\", r"\\"), ("/", r"\/"), (" ", r"\s"), ("|", r"\p"), ("\a", r"\a"),
+    ("\b", r"\b"), ("\f", r"\f"), ("\n", r"\n"), ("\r", r"\r"), ("\t", r"\t"), ("\v", r"\v")]
 
 
 def escape(raw):
@@ -38,7 +25,12 @@ def unescape(raw):
 
 
 class TS3Exception(Exception):
-    pass
+    """
+    Basic Exception for all Teamspeak3 Exceptions.
+    """
+
 
 class TS3ConnectionClosedException(Exception):
-    pass
+    """
+    Exception that signalizes a closed connection.
+    """
