@@ -13,6 +13,9 @@ class EventType(Enum):
     SERVER_EDITED = "notifyserveredited"
     CHANNEL_DESC_CHANGED = "notifychanneldescriptionchanged"
     CHANNEL_EDITED = "notifychanneledited"
+    CHANNEL_CREATED = "notifychannelcreated"
+    CHANNEL_DELETED = "notifychanneldeleted"
+    CHANNEL_MOVED = "notifychannelmoved"
     UNKNOWN = None
 
 
@@ -89,6 +92,15 @@ class EventParser():
             return parsed_event
         if EventType.CHANNEL_EDITED.value == event_type:
             parsed_event = ChannelEditedEvent(event)
+            return parsed_event
+        if EventType.CHANNEL_CREATED.value == event_type:
+            parsed_event = ChannelCreatedEvent(event)
+            return parsed_event
+        if EventType.CHANNEL_DELETED.value == event_type:
+            parsed_event = ChannelDeletedEvent(event)
+            return parsed_event
+        if EventType.CHANNEL_MOVED.value == event_type:
+            parsed_event = ChannelMovedEvent(event)
             return parsed_event
         if EventType.SERVER_EDITED.value == event_type:
             parsed_event = ServerEditedEvent(event)
@@ -169,6 +181,109 @@ class ChannelEditedEvent(TS3Event):
     def reason_id(self):
         return self._reason_id
 
+
+class ChannelCreatedEvent(TS3Event):
+    event_type = EventType.CHANNEL_CREATED
+
+    def __init__(self, data):
+        super().__init__(data)
+        self._channel_id = data.get('cid', '-1')
+        self._channel_topic = data.get('channel_topic', '')
+        self._invoker_id = data.get('invokerid', '-1')
+        self._invoker_name = data.get('invokername', '')
+        self._invoker_uid = data.get('invokeruid', '-1')
+        self._reason_id = data.get('reasonid', '-1')
+
+    @property
+    def channel_id(self):
+        return self._channel_id
+
+    @property
+    def channel_topic(self):
+        return self._channel_topic
+
+    @property
+    def invoker_id(self):
+        return self._invoker_id
+
+    @property
+    def invoker_name(self):
+        return self._invoker_name
+
+    @property
+    def invoker_uid(self):
+        return self._invoker_uid
+
+    @property
+    def reason_id(self):
+        return self._reason_id
+
+class ChannelDeletedEvent(TS3Event):
+    event_type = EventType.CHANNEL_DELETED
+
+    def __init__(self, data):
+        super().__init__(data)
+        self._channel_id = data.get('cid', '-1')        
+        self._invoker_id = data.get('invokerid', '-1')
+        self._invoker_name = data.get('invokername', '')
+        self._invoker_uid = data.get('invokeruid', '-1')        
+
+    @property
+    def channel_id(self):
+        return self._channel_id
+
+    @property
+    def invoker_id(self):
+        return self._invoker_id
+
+    @property
+    def invoker_name(self):
+        return self._invoker_name
+
+    @property
+    def invoker_uid(self):
+        return self._invoker_uid
+
+class ChannelMovedEvent(TS3Event):
+    event_type = EventType.CHANNEL_MOVED
+
+    def __init__(self, data):
+        super().__init__(data)
+        self._cid = data.get('cid', '-1')
+        self._cpid = data.get('cpid', '-1')        
+        self._order = data.get('order', '-1')
+        self._reasonid = data.get('reasonid', '-1')
+        self._invoker_id = data.get('invokerid', '-1')
+        self._invoker_name = data.get('invokername', '')
+        self._invoker_uid = data.get('invokeruid', '-1')        
+
+    @property
+    def channel_id(self):
+        return self._cid
+    
+    @property
+    def channel_pid(self):
+        return self._cpid
+
+    @property
+    def channel_order(self):
+        return self._order
+
+    @property
+    def reason_id(self):
+        return self._reasonid
+
+    @property
+    def invoker_id(self):
+        return self._invoker_id
+
+    @property
+    def invoker_name(self):
+        return self._invoker_name
+
+    @property
+    def invoker_uid(self):
+        return self._invoker_uid
 
 class ChannelDescriptionEditedEvent(TS3Event):
     event_type = EventType.CHANNEL_DESC_CHANGED
