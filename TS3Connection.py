@@ -324,7 +324,7 @@ class TS3Connection:
         Register event_listener for receiving channel_events.
         :param event_listener:  Blinker signal handler function to be informed:
                                 on_event(sender, **kw), kw will contain the event
-        :param channel_id: Channel to register to
+        :param channel_id: Channel to register to, use 0 for all channels
         :param weak_ref:    Use weak refs for blinker, causing event_listeners that go out of scope
                             to be removed
         (breaks nested functions)

@@ -16,6 +16,7 @@ class EventType(Enum):
     CHANNEL_CREATED = "notifychannelcreated"
     CHANNEL_DELETED = "notifychanneldeleted"
     CHANNEL_MOVED = "notifychannelmoved"
+    CHANNEL_PASSWORD_CHANGED = "notifychannelpasswordchanged"
     UNKNOWN = None
 
 
@@ -24,7 +25,9 @@ class EventType(Enum):
 server_events = [EventType.SERVER_EDITED, EventType.CLIENT_ENTER, EventType.CLIENT_LEFT]
 text_events = [EventType.TEXT_MESSAGE]
 channel_events = [EventType.CLIENT_ENTER, EventType.CLIENT_LEFT, EventType.CLIENT_MOVED,
-                  EventType.CHANNEL_DESC_CHANGED, EventType.CHANNEL_EDITED]
+                  EventType.CHANNEL_DESC_CHANGED, EventType.CHANNEL_EDITED,
+                  EventType.CHANNEL_CREATED, EventType.CHANNEL_MOVED,
+                  EventType.CHANNEL_DELETED, EventType.CHANNEL_PASSWORD_CHANGED]
 
 
 class ReasonID(IntEnum):
@@ -52,6 +55,17 @@ class TS3Event():
     @property
     def data(self):
         return self._data
+
+    def __getattr__(self, item):
+        """
+        Allows access to not explicitly specified attributes in event.
+        :param item: Attribute name
+        :type item: str
+        :return: Attribute value string
+        :rtype: str
+        """
+        print(self._data, item)
+        return self._data[item]
 
 
 class EventParser():
@@ -104,6 +118,9 @@ class EventParser():
             return parsed_event
         if EventType.SERVER_EDITED.value == event_type:
             parsed_event = ServerEditedEvent(event)
+            return parsed_event
+        if EventType.CHANNEL_PASSWORD_CHANGED.value == event_type:
+            parsed_event = ChannelPasswordChangedEvent(event)
             return parsed_event
         logging.warning("Unknown event! %s", str(event_type))
         return None
@@ -287,6 +304,17 @@ class ChannelMovedEvent(TS3Event):
 
 class ChannelDescriptionEditedEvent(TS3Event):
     event_type = EventType.CHANNEL_DESC_CHANGED
+
+    def __init__(self, data):
+        super().__init__(data)
+        self._channel_id = int(data.get('cid', '-1'))
+
+    @property
+    def channel_id(self):
+        return self._channel_id
+
+class ChannelPasswordChangedEvent(TS3Event):
+    event_type = EventType.CHANNEL_PASSWORD_CHANGED
 
     def __init__(self, data):
         super().__init__(data)
