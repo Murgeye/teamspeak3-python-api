@@ -48,8 +48,10 @@ class TS3Event():
     """
     event_type = EventType.UNKNOWN
 
-    def __init__(self, data):
+    def __init__(self, data, event_type=None):
         self._data = data
+        if event_type is not None:
+            self._event_type = event_type
         self._logger = logging.getLogger(__name__)
 
     @property
@@ -123,7 +125,7 @@ class EventParser():
             parsed_event = ChannelPasswordChangedEvent(event)
             return parsed_event
         logging.warning("Unknown event! %s", str(event_type))
-        return TS3Event(event)
+        return TS3Event(event, event_type)
 
 
 class ServerEditedEvent(TS3Event):

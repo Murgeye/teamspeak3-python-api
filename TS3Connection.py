@@ -337,6 +337,21 @@ class TS3Connection:
             for event in Events.channel_events:
                 blinker.signal(event.name).connect(event_listener, weak=weak_ref)
 
+    def register_for_unknown_events(self, event_listener=None, weak_ref=True):
+        """
+        Register the event_listener for unknown events. Note: This will not actually call any register
+        function, but will only add the event_listener to the list of functions to inform on unknown
+        events.
+        :param event_listener: Blinker signal handler function to be informed:
+                               on_event(sender, **kw), kw will contain the event
+        :param weak_ref: Use weak refs for blinker, causing eventlisteners that go out of scope to
+                         be removed (breaks nested functions)
+        :type event_listener: (str, dict[str, any]) -> None
+        :type weak_ref: bool
+        """
+        if event_listener is not None:
+            blinker.signal("UNKNOWN").connect(event_listener, weak=weak_ref)
+
     def clientmove(self, channel_id, client_id):
         """
         Move a client to another channel.
