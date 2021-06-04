@@ -341,7 +341,7 @@ class TS3Connection:
         """
         Register the event_listener for unknown events. Note: This will not actually call any register
         function, but will only add the event_listener to the list of functions to inform on unknown
-        events.
+        events. _event_type will hold the event type sent by the server.
         :param event_listener: Blinker signal handler function to be informed:
                                on_event(sender, **kw), kw will contain the event
         :param weak_ref: Use weak refs for blinker, causing eventlisteners that go out of scope to
