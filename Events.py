@@ -123,7 +123,7 @@ class EventParser():
             parsed_event = ChannelPasswordChangedEvent(event)
             return parsed_event
         logging.warning("Unknown event! %s", str(event_type))
-        return None
+        return TS3Event(event)
 
 
 class ServerEditedEvent(TS3Event):
