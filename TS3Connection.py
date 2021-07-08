@@ -489,6 +489,16 @@ class TS3Connection:
         """
         return self._parse_resp_to_dict(self._send("clientinfo", ["clid=" + str(client_id)]))
 
+    def clientpoke(self, clid, msg):
+        """
+        Pokes a client with a message.
+        :param clid: client_id of the client to poke
+        :param msg: Message to send.
+        :type clid: int
+        :type msg: str
+        """
+        return self._parse_resp_to_dict(self._send("clientpoke", ["clid=" + str(clid), "msg=" + str(msg)]))
+
     def _parse_resp(self, resp):
         """
         Parses a response. Messages starting with notify... are handled as events and the connected
