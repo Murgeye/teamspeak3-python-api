@@ -352,15 +352,15 @@ class TS3Connection:
         if event_listener is not None:
             blinker.signal("UNKNOWN").connect(event_listener, weak=weak_ref)
 
-    def clientmove(self, channel_id, client_id):
+    def clientmove(self, client_id, channel_id):
         """
         Move a client to another channel.
-        :param channel_id: Channel to move client to.
         :param client_id: Id of the client to move.
+        :param channel_id: Channel to move client to.
         :type channel_id: int
         :type client_id: int
         """
-        self._send("clientmove", ["cid=" + str(channel_id), "clid=" + str(client_id)])
+        self._send("clientmove", ["clid=" + str(client_id), "cid=" + str(channel_id)])
 
     def clientupdate(self, params=None):
         """
