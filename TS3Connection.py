@@ -480,6 +480,30 @@ class TS3Connection:
             if server_group["name"] == name:
                 return server_group
 
+    def hostinfo(self):
+        """
+        Returns hostinfo for the current connected instance.
+        :return: Dictionary of host information.
+        :rtype: dict[str,str]
+        """
+        return self._parse_resp_to_dict(self._send("hostinfo"))
+
+    def instanceinfo(self):
+        """
+        Returns instanceinfo for the current connected instance.
+        :return: Dictionary of instance information.
+        :rtype: dict[str,str]
+        """
+        return self._parse_resp_to_dict(self._send("instanceinfo"))
+
+    def serverinfo(self):
+        """
+        Returns serverinfo for the current selected virtual server.
+        :return: Dictionary of server information.
+        :rtype: dict[str,str]
+        """
+        return self._parse_resp_to_dict(self._send("serverinfo"))
+
     def clientinfo(self, client_id):
         """
         Returns clientinfo for a client specified by its id.
