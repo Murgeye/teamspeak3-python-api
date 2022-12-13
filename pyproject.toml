@@ -1,3 +1,6 @@
+[project]
+name = "ts3API"
+
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
@@ -7,5 +10,7 @@ addopts = [
     "--import-mode=importlib",
 ]
 
-[project]
-name = "ts3API"
+[tool.pylint.MASTER]
+ignore-paths = "tests"
+fail-under = "9.0"
+suggestion-mode = 'yes'
