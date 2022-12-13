@@ -147,13 +147,17 @@ class ServerEditedEvent(TS3Event):
     def __init__(self, data):
         super().__init__(data)
         self._reason_id = data.get("reasonid", "")
-        del data["reasonid"]
+        if "reasonid" in data:
+            del data["reasonid"]
         self._invoker_id = data.get("invokerid", "-1")
-        del data["invokerid"]
+        if "invokerid" in data:
+            del data["invokerid"]
         self._invoker_uid = data.get("invokeruid", "-1")
-        del data["invokeruid"]
+        if "invokeruid" in data:
+            del data["invokeruid"]
         self._invoker_name = data.get("invokername", "")
-        del data["invokername"]
+        if "invokername" in data:
+            del data["invokername"]
         self._changed_properties = data
 
     @property
