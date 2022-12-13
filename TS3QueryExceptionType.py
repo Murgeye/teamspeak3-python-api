@@ -1,7 +1,14 @@
+# pylint: disable=invalid-name
+"""
+Utility module for TS3 Exceptions.
+"""
 from enum import IntEnum
 
 
 class TS3QueryExceptionType(IntEnum):
+    """
+    TS3 Query Exception based on TS3 error codes.
+    """
     OK = 0
     UNDEFINED = 1
     NOT_IMPLEMENTED = 2

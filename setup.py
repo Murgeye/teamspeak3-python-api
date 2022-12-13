@@ -5,6 +5,9 @@
 # Copyright © 2021 Fabian Ising <ts3API@murgi.de>
 #
 # Distributed under terms of the MIT license.
+"""
+Default setuptools script.
+"""
 
 import setuptools
 

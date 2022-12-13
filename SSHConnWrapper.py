@@ -1,3 +1,7 @@
+# pylint: disable=invalid-name
+"""
+This module provides a SSH wrapper for a TeamSpeak 3 connection.
+"""
 import socket
 from os.path import isfile
 
@@ -5,8 +9,11 @@ import paramiko
 
 from .utilities import TS3Exception, TS3ConnectionClosedException
 
-
 class SSHConnWrapper:
+    """
+    SSH wrapper for TS3 connections.
+    """
+    # pylint: disable=too-many-arguments
     def __init__(self, host, port, username, password, accept_all_keys=False, host_key_file=None,
                  use_system_hosts=False, timeout=10, timeout_limit=3):
         """
@@ -54,10 +61,11 @@ class SSHConnWrapper:
                 try:
                     received = self._channel.recv(4096)
                     timeout_cnt = 0
-                except socket.timeout:
+                except socket.timeout as exc:
                     timeout_cnt += 1
                     if timeout_cnt >= self.timeout_limit:
-                        raise TS3ConnectionClosedException("SSH connection timeout limit received!")
+                        raise TS3ConnectionClosedException("SSH connection timeout\
+                                                           limit received!") from exc
                     continue
                 if len(received) == 0:
                     raise TS3ConnectionClosedException("SSH connection was closed!")
@@ -74,8 +82,8 @@ class SSHConnWrapper:
         """
         try:
             self._channel.send(data)
-        except OSError:
-            raise TS3ConnectionClosedException(OSError)
+        except OSError as exc:
+            raise TS3ConnectionClosedException(OSError) from exc
 
     def close(self):
         """"
