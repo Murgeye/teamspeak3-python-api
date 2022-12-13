@@ -1,9 +1,8 @@
 import logging
 from unittest import TestCase
-
-from .Events import ClientLeftEvent, ReasonID, ClientKickedEvent, ClientBannedEvent
-from .TS3Connection import TS3Connection
-
+import sys
+from ts3API.Events import ClientLeftEvent, ReasonID, ClientKickedEvent, ClientBannedEvent
+from ts3API.TS3Connection import TS3Connection
 
 class MockTS3Connection(TS3Connection):
     def __init__(self):
