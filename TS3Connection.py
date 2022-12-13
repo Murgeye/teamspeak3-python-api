@@ -5,7 +5,6 @@ Main TS3Api File
 import logging
 import socket
 import sys
-import telnetlib
 import threading
 import time
 import traceback
@@ -17,6 +16,7 @@ from . import utilities
 from .Events import TS3Event
 from .TS3QueryExceptionType import TS3QueryExceptionType
 from .utilities import TS3Exception, TS3ConnectionClosedException
+from .socket_wrapper import SocketWrapper
 
 
 class TS3Connection:
@@ -62,7 +62,7 @@ class TS3Connection:
         self._logger.addHandler(file_handler)
 
         if not use_ssh:
-            self._conn = telnetlib.Telnet(host, port, timeout=socket.getdefaulttimeout())
+            self._conn = SocketWrapper(host, port, timeout=socket.getdefaulttimeout())
             self._logger.debug(self._conn.read_until(b"\n\r"))
             self._logger.debug(self._conn.read_until(b"\n\r"))
         else:
