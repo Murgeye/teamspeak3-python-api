@@ -66,7 +66,6 @@ class TS3Event():
         :return: Attribute value string
         :rtype: str
         """
-        print(self._data, item)
         return self._data[item]
 
 
