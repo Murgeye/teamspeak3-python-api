@@ -1,5 +1,8 @@
 # Simple Python API for the Teamspeak 3 Server Query API
 
+[![CodeQL](https://github.com/Murgeye/teamspeak3-python-api/actions/workflows/codeql-analysis.yml/badge.svg?branch=master)](https://github.com/Murgeye/teamspeak3-python-api/actions/workflows/codeql-analysis.yml?query=branch%3Amaster)
+[![Code Style](https://github.com/Murgeye/teamspeak3-python-api/actions/workflows/black-formatter.yml/badge.svg?branch=master)](https://github.com/Murgeye/teamspeak3-python-api/actions/workflows/black-formatter.yml?query=branch%3Amaster)
+
 Python 3 API that allows interactive access to the Teamspeak 3 Server Query interface.
 
 # Installation
