@@ -10,6 +10,7 @@ class EventType(Enum):
     """
     Enum of event names used by TS3.
     """
+
     CLIENT_ENTER = "notifycliententerview"
     CLIENT_LEFT = "notifyclientleftview"
     CLIENT_MOVED = "notifyclientmoved"
@@ -45,6 +46,7 @@ class ReasonID(IntEnum):
     """
     Enum of ReasonID given for events.
     """
+
     SELF_JOINED = 0
     MOVED = 1
     TIMEOUT = 3
@@ -151,6 +153,7 @@ class ServerEditedEvent(TS3Event):
     """
     Event created when the server is edited.
     """
+
     event_type = EventType.SERVER_EDITED
 
     def __init__(self, data):
@@ -194,6 +197,7 @@ class ChannelEditedEvent(TS3Event):
     """
     Event created on channel edits.
     """
+
     event_type = EventType.CHANNEL_EDITED
 
     def __init__(self, data):
@@ -234,6 +238,7 @@ class ChannelCreatedEvent(TS3Event):
     """
     Event created on channel creation.
     """
+
     event_type = EventType.CHANNEL_CREATED
 
     def __init__(self, data):
@@ -274,6 +279,7 @@ class ChannelDeletedEvent(TS3Event):
     """
     Event created on channel deletion.
     """
+
     event_type = EventType.CHANNEL_DELETED
 
     def __init__(self, data):
@@ -304,6 +310,7 @@ class ChannelMovedEvent(TS3Event):
     """
     Event created when a channel is moved in the server hierarchy.
     """
+
     event_type = EventType.CHANNEL_MOVED
 
     def __init__(self, data):
@@ -349,6 +356,7 @@ class ChannelDescriptionEditedEvent(TS3Event):
     """
     Event created on channel description change.
     """
+
     event_type = EventType.CHANNEL_DESC_CHANGED
 
     def __init__(self, data):
@@ -364,6 +372,7 @@ class ChannelPasswordChangedEvent(TS3Event):
     """
     Event created on channel password change.
     """
+
     event_type = EventType.CHANNEL_PASSWORD_CHANGED
 
     def __init__(self, data):
@@ -379,6 +388,7 @@ class ClientEnteredEvent(TS3Event):
     """
     Event created when a client enters a channel.
     """
+
     event_type = EventType.CLIENT_ENTER
 
     def __init__(self, data):
@@ -494,6 +504,7 @@ class ClientLeftEvent(TS3Event):
     """
     Event created when a client leaves a channel.
     """
+
     event_type = EventType.CLIENT_LEFT
 
     def __init__(self, data):
@@ -525,6 +536,7 @@ class ClientKickedEvent(ClientLeftEvent):
     """
     Event created when a client is kicked.
     """
+
     def __init__(self, data):
         super().__init__(data)
         self._invoker_id = int(data.get("invokerid", "-1"))
@@ -548,6 +560,7 @@ class ClientBannedEvent(ClientKickedEvent):
     """
     Event created when a client is banned.
     """
+
     def __init__(self, data):
         super().__init__(data)
         self._ban_time = int(data.get("bantime", "-1"))
@@ -561,6 +574,7 @@ class ClientMovedEvent(TS3Event):
     """
     Event created when a client is moved from/to a channel.
     """
+
     event_type = EventType.CLIENT_MOVED
 
     def __init__(self, data):
@@ -601,6 +615,7 @@ class ClientMovedSelfEvent(TS3Event):
     """
     Event created when a client is moves themselves from/to a channel.
     """
+
     event_type = EventType.CLIENT_MOVED
 
     def __init__(self, data):
@@ -626,6 +641,7 @@ class TextMessageEvent(TS3Event):
     """
     Event created when a Text Message is received.
     """
+
     event_type = EventType.TEXT_MESSAGE
 
     def __init__(self, data):

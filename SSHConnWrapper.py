@@ -9,10 +9,12 @@ import paramiko
 
 from .utilities import TS3Exception, TS3ConnectionClosedException
 
+
 class SSHConnWrapper:
     """
     SSH wrapper for TS3 connections.
     """
+
     # pylint: disable=too-many-arguments
     def __init__(
         self,

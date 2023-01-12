@@ -75,9 +75,7 @@ class TS3Connection:
         self._logger.addHandler(file_handler)
 
         if not use_ssh:
-            self._conn = SocketWrapper(
-                host, port, timeout=socket.getdefaulttimeout()
-            )
+            self._conn = SocketWrapper(host, port, timeout=socket.getdefaulttimeout())
             self._logger.debug(self._conn.read_until(b"\n\r"))
             self._logger.debug(self._conn.read_until(b"\n\r"))
         else:

@@ -9,6 +9,7 @@ class TS3QueryExceptionType(IntEnum):
     """
     TS3 Query Exception based on TS3 error codes.
     """
+
     OK = 0
     UNDEFINED = 1
     NOT_IMPLEMENTED = 2

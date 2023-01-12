@@ -3,6 +3,7 @@ from unittest import TestCase
 import sys
 from ts3API import utilities
 
+
 def test_escape_all():
     """
     Simple test: just concatenate all values and check the escaping
@@ -13,6 +14,7 @@ def test_escape_all():
         unescaped += v
         expected += r
     assert utilities.escape(unescaped) == expected
+
 
 def test_unescape_all():
     """
@@ -25,6 +27,7 @@ def test_unescape_all():
         escaped += r
     assert utilities.unescape(escaped) == expected
 
+
 def test_escape_order():
     """
     Check if the order of escaping is correct.
@@ -32,6 +35,7 @@ def test_escape_order():
     unescaped = "\\r\n"
     expected = "\\\\r\\n"
     assert utilities.escape(unescaped) == expected
+
 
 def test_escape_whitespace():
     """
