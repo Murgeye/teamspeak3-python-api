@@ -14,8 +14,18 @@ class SSHConnWrapper:
     SSH wrapper for TS3 connections.
     """
     # pylint: disable=too-many-arguments
-    def __init__(self, host, port, username, password, accept_all_keys=False, host_key_file=None,
-                 use_system_hosts=False, timeout=10, timeout_limit=3):
+    def __init__(
+        self,
+        host,
+        port,
+        username,
+        password,
+        accept_all_keys=False,
+        host_key_file=None,
+        use_system_hosts=False,
+        timeout=10,
+        timeout_limit=3,
+    ):
         """
         Create a new SSH connection wrapper.
         :param host:  Hostname of the Server  to connect to.
@@ -40,7 +50,9 @@ class SSHConnWrapper:
         if host_key_file is not None and isfile(host_key_file):
             self._ssh_conn.load_host_keys(host_key_file)
         if username is not None and password is not None:
-            self._ssh_conn.connect(host, port=port, username=username, password=password)
+            self._ssh_conn.connect(
+                host, port=port, username=username, password=password
+            )
             if host_key_file is not None:
                 self._ssh_conn.save_host_keys(host_key_file)
             self._channel = self._ssh_conn.invoke_shell("raw")
@@ -64,16 +76,17 @@ class SSHConnWrapper:
                 except socket.timeout as exc:
                     timeout_cnt += 1
                     if timeout_cnt >= self.timeout_limit:
-                        raise TS3ConnectionClosedException("SSH connection timeout\
-                                                           limit received!") from exc
+                        raise TS3ConnectionClosedException(
+                            "SSH connection timeout limit received!"
+                        ) from exc
                     continue
                 if len(received) == 0:
                     raise TS3ConnectionClosedException("SSH connection was closed!")
                 self._buffer += received
             else:
                 break
-        data = self._buffer[:delimiter_pos + len(delimiter)]
-        self._buffer = self._buffer[delimiter_pos + len(delimiter):]
+        data = self._buffer[: delimiter_pos + len(delimiter)]
+        self._buffer = self._buffer[delimiter_pos + len(delimiter) :]
         return data
 
     def write(self, data):
@@ -86,7 +99,7 @@ class SSHConnWrapper:
             raise TS3ConnectionClosedException(OSError) from exc
 
     def close(self):
-        """"
+        """
         Close the underlying SSH connection.
         """
         self._ssh_conn.close()

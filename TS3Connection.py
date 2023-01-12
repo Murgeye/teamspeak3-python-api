@@ -26,9 +26,20 @@ class TS3Connection:
     """
 
     # pylint: disable=too-many-arguments
-    def __init__(self, host="127.0.0.1", port=10011, log_file="api.log", use_ssh=False,
-                 username=None, password=None, accept_all_keys=False, host_key_file=None,
-                 use_system_hosts=False, sshtimeout=None, sshtimeoutlimit=3):
+    def __init__(
+        self,
+        host="127.0.0.1",
+        port=10011,
+        log_file="api.log",
+        use_ssh=False,
+        username=None,
+        password=None,
+        accept_all_keys=False,
+        host_key_file=None,
+        use_system_hosts=False,
+        sshtimeout=None,
+        sshtimeoutlimit=3,
+    ):
         """
         Creates a new TS3Connection.
         :param host: Host to connect to. Can be an IP address or a hostname.
@@ -49,11 +60,13 @@ class TS3Connection:
         self._data_read.set()
         self._data = None
         # create console handler and set level to warning
-        file_handler = logging.FileHandler(log_file, mode='a+')
+        file_handler = logging.FileHandler(log_file, mode="a+")
         file_handler.setLevel(logging.WARNING)
 
         # create formatter
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
 
         # add formatter to ch
         file_handler.setFormatter(formatter)
@@ -62,16 +75,25 @@ class TS3Connection:
         self._logger.addHandler(file_handler)
 
         if not use_ssh:
-            self._conn = SocketWrapper(host, port, timeout=socket.getdefaulttimeout())
+            self._conn = SocketWrapper(
+                host, port, timeout=socket.getdefaulttimeout()
+            )
             self._logger.debug(self._conn.read_until(b"\n\r"))
             self._logger.debug(self._conn.read_until(b"\n\r"))
         else:
             from .SSHConnWrapper import SSHConnWrapper
-            self._conn = SSHConnWrapper(host, port, username, password,
-                                        accept_all_keys=accept_all_keys,
-                                        host_key_file=host_key_file, timeout=sshtimeout,
-                                        timeout_limit=sshtimeoutlimit,
-                                        use_system_hosts=use_system_hosts)
+
+            self._conn = SSHConnWrapper(
+                host,
+                port,
+                username,
+                password,
+                accept_all_keys=accept_all_keys,
+                host_key_file=host_key_file,
+                timeout=sshtimeout,
+                timeout_limit=sshtimeoutlimit,
+                use_system_hosts=use_system_hosts,
+            )
             self._logger.debug(self._conn.read_until(b"\n\r"))
             self._logger.debug(self._conn.read_until(b"\n\r"))
         threading.Thread(target=self._recv).start()
@@ -133,7 +155,7 @@ class TS3Connection:
         :type log_keepalive: bool
         """
         query = command
-        saved_resp = b''
+        saved_resp = b""
         ack = False
         if args is None:
             args = []
@@ -146,7 +168,7 @@ class TS3Connection:
             self._logger.debug("Trying to acquire lock")
             if self._conn_lock.acquire():
                 self._logger.debug("Lock acquired")
-                if not query == b'\n\r' or query == b'\n\r' and log_keepalive:
+                if not query == b"\n\r" or query == b"\n\r" and log_keepalive:
                     self._logger.debug("Query: %s", str(query))
                 self._logger.debug("Writing to connection")
                 self._conn.write(query)
@@ -161,12 +183,19 @@ class TS3Connection:
                         self._new_data.clear()
                         self._data_read.set()
                         if resp is not None:
-                            if resp[0] == b'error':
+                            if resp[0] == b"error":
                                 ack = True
-                                if resp[1] != b'id=0':
+                                if resp[1] != b"id=0":
                                     raise TS3QueryException(
-                                        int(resp[1].decode(encoding='UTF-8').split("=", 1)[1]),
-                                        resp[2].decode(encoding='UTF-8').split("=", 1)[1])
+                                        int(
+                                            resp[1]
+                                            .decode(encoding="UTF-8")
+                                            .split("=", 1)[1]
+                                        ),
+                                        resp[2]
+                                        .decode(encoding="UTF-8")
+                                        .split("=", 1)[1],
+                                    )
                             else:
                                 self._logger.debug("Resp: %s", str(resp))
                                 saved_resp += resp
@@ -199,7 +228,8 @@ class TS3Connection:
                 try:
                     self._conn.close()
                     self._logger.debug(
-                        "Releasing lock for closed connection to unfreeze threads ...")
+                        "Releasing lock for closed connection to unfreeze threads ..."
+                    )
                     self._conn_lock.release()
                 # We really want to ignore ALL exceptions here!
                 # pylint: disable=bare-except
@@ -212,11 +242,13 @@ class TS3Connection:
             if isinstance(data, TS3Event):
                 event = data
                 if isinstance(event, Events.TextMessageEvent):
-                    signal = blinker.signal(event.event_type.name + "_" + event.targetmode.lower())
+                    signal = blinker.signal(
+                        event.event_type.name + "_" + event.targetmode.lower()
+                    )
                 else:
                     signal = blinker.signal(event.event_type.name)
                 self._logger.debug("Sending signal")
-                threading.Thread(target=signal.send, kwargs={'event': event}).start()
+                threading.Thread(target=signal.send, kwargs={"event": event}).start()
                 continue
             if data is not None:
                 self._data_read.wait()
@@ -233,10 +265,10 @@ class TS3Connection:
         :return: Dictionary containing all info extracted from the response.
         :rtype: dict[str, str]
         """
-        resp = resp.decode(encoding='UTF-8').split(" ")
+        resp = resp.decode(encoding="UTF-8").split(" ")
         info = {}
         for part in resp:
-            split = part.split('=', 1)
+            split = part.split("=", 1)
             # TODO: Handle empty data?
             if len(split) == 2:
                 key, value = split
@@ -275,7 +307,9 @@ class TS3Connection:
         self._send("servernotifyregister", ["event=textserver"])
         if event_listener is not None:
             for event in Events.text_events:
-                blinker.signal(event.name + "_server").connect(event_listener, weak=weak_ref)
+                blinker.signal(event.name + "_server").connect(
+                    event_listener, weak=weak_ref
+                )
 
     def register_for_channel_messages(self, event_listener=None, weak_ref=True):
         """
@@ -291,7 +325,9 @@ class TS3Connection:
         self._send("servernotifyregister", ["event=textchannel"])
         if event_listener is not None:
             for event in Events.text_events:
-                blinker.signal(event.name + "_channel").connect(event_listener, weak=weak_ref)
+                blinker.signal(event.name + "_channel").connect(
+                    event_listener, weak=weak_ref
+                )
 
     def register_for_private_messages(self, event_listener=None, weak_ref=True):
         """
@@ -308,7 +344,9 @@ class TS3Connection:
         self._send("servernotifyregister", ["event=textprivate"])
         if event_listener is not None:
             for event in Events.text_events:
-                blinker.signal(event.name + "_private").connect(event_listener, weak=weak_ref)
+                blinker.signal(event.name + "_private").connect(
+                    event_listener, weak=weak_ref
+                )
 
     def register_for_server_events(self, event_listener=None, weak_ref=True):
         """
@@ -325,7 +363,9 @@ class TS3Connection:
             for event in Events.server_events:
                 blinker.signal(event.name).connect(event_listener, weak=weak_ref)
 
-    def register_for_channel_events(self, channel_id, event_listener=None, weak_ref=True):
+    def register_for_channel_events(
+        self, channel_id, event_listener=None, weak_ref=True
+    ):
         """
         Register event_listener for receiving channel_events.
         :param event_listener:  Blinker signal handler function to be informed:
@@ -388,8 +428,14 @@ class TS3Connection:
         :param reason_msg: Message to send on kick, max. 40 characters
         :type reason_msg: str
         """
-        self._send("clientkick", ["clid=" + str(client_id), "reasonid=" + str(reason_id),
-                                  "reasonmsg=" + str(reason_msg)])
+        self._send(
+            "clientkick",
+            [
+                "clid=" + str(client_id),
+                "reasonid=" + str(reason_id),
+                "reasonmsg=" + str(reason_msg),
+            ],
+        )
 
     def whoami(self):
         """
@@ -403,9 +449,9 @@ class TS3Connection:
 
     def channellist(self, params=None):
         """
-                Returns the channel listt.
-                :param params: Optional parameters as defined by the serverquery manual.
-                :return:  List of channels
+        Returns the channel listt.
+        :param params: Optional parameters as defined by the serverquery manual.
+        :return:  List of channels
         """
         if params is None:
             params = []
@@ -420,9 +466,9 @@ class TS3Connection:
 
     def channel_name_list(self):
         """
-                    Returns a liszt of channel names. (Convenience Wrapper around channellist)
-                    :return:  List of channel names
-                  """
+        Returns a list of channel names. (Convenience Wrapper around channellist)
+        :return:  List of channel names
+        """
         names = []
         channels = self.channellist()
         for channel in channels:
@@ -437,7 +483,8 @@ class TS3Connection:
         :rtype: list[dict[str, str]]
         """
         return TS3Connection._parse_resp_to_list_of_dicts(
-            self._send("channelfind", ["pattern=" + pattern]))
+            self._send("channelfind", ["pattern=" + pattern])
+        )
 
     def channelfind_by_name(self, name):
         """
@@ -463,8 +510,14 @@ class TS3Connection:
         :type target: int
         :type msg: str
         """
-        self._send("sendtextmessage",
-                   ["targetmode=" + str(targetmode), "target=" + str(target), "msg=" + str(msg)])
+        self._send(
+            "sendtextmessage",
+            [
+                "targetmode=" + str(targetmode),
+                "target=" + str(target),
+                "msg=" + str(msg),
+            ],
+        )
 
     def servergrouplist(self):
         """
@@ -517,7 +570,9 @@ class TS3Connection:
         :return: Dictionary of client information.
         :rtype: dict[str,str]
         """
-        return self._parse_resp_to_dict(self._send("clientinfo", ["clid=" + str(client_id)]))
+        return self._parse_resp_to_dict(
+            self._send("clientinfo", ["clid=" + str(client_id)])
+        )
 
     def clientpoke(self, clid, msg):
         """
@@ -527,8 +582,9 @@ class TS3Connection:
         :type clid: int
         :type msg: str
         """
-        return self._parse_resp_to_dict(self._send("clientpoke", ["clid=" + str(clid),
-                                                                  "msg=" + str(msg)]))
+        return self._parse_resp_to_dict(
+            self._send("clientpoke", ["clid=" + str(clid), "msg=" + str(msg)])
+        )
 
     def _parse_resp(self, resp):
         """
@@ -542,18 +598,18 @@ class TS3Connection:
         :rtype: None | dict[str, str] | bytes
         """
         # Acknowledgements
-        if resp.startswith(b'error'):
-            resp = resp.split(b' ')
+        if resp.startswith(b"error"):
+            resp = resp.split(b" ")
             return resp
         # Events
-        if resp.startswith(b'notify'):
+        if resp.startswith(b"notify"):
             event = {}
             event_type = "Unknown"
             try:
-                resp = resp.decode(encoding='UTF-8').split(" ")
+                resp = resp.decode(encoding="UTF-8").split(" ")
                 event_type = resp[0]
                 for info in resp[1:]:
-                    split = info.split('=', 1)
+                    split = info.split("=", 1)
                     if len(split) == 2:
                         key, value = split
                         event[key] = utilities.unescape(value)
@@ -643,9 +699,11 @@ class TS3Connection:
             :param kwargs: dict of labeled parameters within the function head
             :return: (List of) Dictionary response or nothing, depends on ts3server response
             """
-            resp = self._send(item,
-                              ['-{}'.format(x) for x in args] + ['{}={}'.format(x[0], x[1]) for x in
-                                                                 kwargs.items()])
+            resp = self._send(
+                item,
+                ["-{}".format(x) for x in args]
+                + ["{}={}".format(x[0], x[1]) for x in kwargs.items()],
+            )
             if resp:
                 parsed_resp = self._parse_resp_to_list_of_dicts(resp)
                 return parsed_resp[0] if len(parsed_resp) == 1 else parsed_resp
@@ -669,7 +727,8 @@ class TS3QueryException(TS3Exception):
         self._type = TS3QueryExceptionType(error_id)
         self._msg = utilities.unescape(message)
         super(TS3QueryException, self).__init__(
-            "Query failed with id=" + str(error_id) + " msg=" + str(self._msg))
+            "Query failed with id=" + str(error_id) + " msg=" + str(self._msg)
+        )
 
     @property
     def message(self):
