@@ -10,6 +10,7 @@ class EventType(Enum):
     """
     Enum of event names used by TS3.
     """
+
     CLIENT_ENTER = "notifycliententerview"
     CLIENT_LEFT = "notifyclientleftview"
     CLIENT_MOVED = "notifyclientmoved"
@@ -28,16 +29,24 @@ class EventType(Enum):
 # client events ...
 server_events = [EventType.SERVER_EDITED, EventType.CLIENT_ENTER, EventType.CLIENT_LEFT]
 text_events = [EventType.TEXT_MESSAGE]
-channel_events = [EventType.CLIENT_ENTER, EventType.CLIENT_LEFT, EventType.CLIENT_MOVED,
-                  EventType.CHANNEL_DESC_CHANGED, EventType.CHANNEL_EDITED,
-                  EventType.CHANNEL_CREATED, EventType.CHANNEL_MOVED,
-                  EventType.CHANNEL_DELETED, EventType.CHANNEL_PASSWORD_CHANGED]
+channel_events = [
+    EventType.CLIENT_ENTER,
+    EventType.CLIENT_LEFT,
+    EventType.CLIENT_MOVED,
+    EventType.CHANNEL_DESC_CHANGED,
+    EventType.CHANNEL_EDITED,
+    EventType.CHANNEL_CREATED,
+    EventType.CHANNEL_MOVED,
+    EventType.CHANNEL_DELETED,
+    EventType.CHANNEL_PASSWORD_CHANGED,
+]
 
 
 class ReasonID(IntEnum):
     """
     Enum of ReasonID given for events.
     """
+
     SELF_JOINED = 0
     MOVED = 1
     TIMEOUT = 3
@@ -49,10 +58,11 @@ class ReasonID(IntEnum):
     SERVER_SHUTDOWN = 11
 
 
-class TS3Event():
+class TS3Event:
     """
     Event class for Teamspeak 3 events. This is a stub for all other events.
     """
+
     event_type = EventType.UNKNOWN
 
     def __init__(self, data, event_type=None):
@@ -79,7 +89,7 @@ class TS3Event():
         return self._data[item]
 
 
-class EventParser():
+class EventParser:
     @staticmethod
     def parse_event(event, event_type):
         """
@@ -95,7 +105,7 @@ class EventParser():
             parsed_event = TextMessageEvent(event)
             return parsed_event
         if EventType.CLIENT_MOVED.value == event_type:
-            if 'invokerid' in event:
+            if "invokerid" in event:
                 parsed_event = ClientMovedEvent(event)
             else:
                 parsed_event = ClientMovedSelfEvent(event)
@@ -104,8 +114,10 @@ class EventParser():
             parsed_event = ClientEnteredEvent(event)
             return parsed_event
         if EventType.CLIENT_LEFT.value == event_type:
-            reason_id = int(event.get("reasonid", '-1'))
-            if reason_id == int(ReasonID.SERVER_KICK) or reason_id == int(ReasonID.CHANNEL_KICK):
+            reason_id = int(event.get("reasonid", "-1"))
+            if reason_id == int(ReasonID.SERVER_KICK) or reason_id == int(
+                ReasonID.CHANNEL_KICK
+            ):
                 parsed_event = ClientKickedEvent(event)
             elif reason_id == int(ReasonID.BAN):
                 parsed_event = ClientBannedEvent(event)
@@ -141,6 +153,7 @@ class ServerEditedEvent(TS3Event):
     """
     Event created when the server is edited.
     """
+
     event_type = EventType.SERVER_EDITED
 
     def __init__(self, data):
@@ -184,16 +197,17 @@ class ChannelEditedEvent(TS3Event):
     """
     Event created on channel edits.
     """
+
     event_type = EventType.CHANNEL_EDITED
 
     def __init__(self, data):
         super().__init__(data)
-        self._channel_id = data.get('cid', '-1')
-        self._channel_topic = data.get('channel_topic', '')
-        self._invoker_id = data.get('invokerid', '-1')
-        self._invoker_name = data.get('invokername', '')
-        self._invoker_uid = data.get('invokeruid', '-1')
-        self._reason_id = data.get('reasonid', '-1')
+        self._channel_id = data.get("cid", "-1")
+        self._channel_topic = data.get("channel_topic", "")
+        self._invoker_id = data.get("invokerid", "-1")
+        self._invoker_name = data.get("invokername", "")
+        self._invoker_uid = data.get("invokeruid", "-1")
+        self._reason_id = data.get("reasonid", "-1")
 
     @property
     def channel_id(self):
@@ -224,16 +238,17 @@ class ChannelCreatedEvent(TS3Event):
     """
     Event created on channel creation.
     """
+
     event_type = EventType.CHANNEL_CREATED
 
     def __init__(self, data):
         super().__init__(data)
-        self._channel_id = data.get('cid', '-1')
-        self._channel_topic = data.get('channel_topic', '')
-        self._invoker_id = data.get('invokerid', '-1')
-        self._invoker_name = data.get('invokername', '')
-        self._invoker_uid = data.get('invokeruid', '-1')
-        self._reason_id = data.get('reasonid', '-1')
+        self._channel_id = data.get("cid", "-1")
+        self._channel_topic = data.get("channel_topic", "")
+        self._invoker_id = data.get("invokerid", "-1")
+        self._invoker_name = data.get("invokername", "")
+        self._invoker_uid = data.get("invokeruid", "-1")
+        self._reason_id = data.get("reasonid", "-1")
 
     @property
     def channel_id(self):
@@ -259,18 +274,20 @@ class ChannelCreatedEvent(TS3Event):
     def reason_id(self):
         return self._reason_id
 
+
 class ChannelDeletedEvent(TS3Event):
     """
     Event created on channel deletion.
     """
+
     event_type = EventType.CHANNEL_DELETED
 
     def __init__(self, data):
         super().__init__(data)
-        self._channel_id = data.get('cid', '-1')
-        self._invoker_id = data.get('invokerid', '-1')
-        self._invoker_name = data.get('invokername', '')
-        self._invoker_uid = data.get('invokeruid', '-1')
+        self._channel_id = data.get("cid", "-1")
+        self._invoker_id = data.get("invokerid", "-1")
+        self._invoker_name = data.get("invokername", "")
+        self._invoker_uid = data.get("invokeruid", "-1")
 
     @property
     def channel_id(self):
@@ -288,21 +305,23 @@ class ChannelDeletedEvent(TS3Event):
     def invoker_uid(self):
         return self._invoker_uid
 
+
 class ChannelMovedEvent(TS3Event):
     """
     Event created when a channel is moved in the server hierarchy.
     """
+
     event_type = EventType.CHANNEL_MOVED
 
     def __init__(self, data):
         super().__init__(data)
-        self._cid = data.get('cid', '-1')
-        self._cpid = data.get('cpid', '-1')
-        self._order = data.get('order', '-1')
-        self._reasonid = data.get('reasonid', '-1')
-        self._invoker_id = data.get('invokerid', '-1')
-        self._invoker_name = data.get('invokername', '')
-        self._invoker_uid = data.get('invokeruid', '-1')
+        self._cid = data.get("cid", "-1")
+        self._cpid = data.get("cpid", "-1")
+        self._order = data.get("order", "-1")
+        self._reasonid = data.get("reasonid", "-1")
+        self._invoker_id = data.get("invokerid", "-1")
+        self._invoker_name = data.get("invokername", "")
+        self._invoker_uid = data.get("invokeruid", "-1")
 
     @property
     def channel_id(self):
@@ -332,29 +351,33 @@ class ChannelMovedEvent(TS3Event):
     def invoker_uid(self):
         return self._invoker_uid
 
+
 class ChannelDescriptionEditedEvent(TS3Event):
     """
     Event created on channel description change.
     """
+
     event_type = EventType.CHANNEL_DESC_CHANGED
 
     def __init__(self, data):
         super().__init__(data)
-        self._channel_id = int(data.get('cid', '-1'))
+        self._channel_id = int(data.get("cid", "-1"))
 
     @property
     def channel_id(self):
         return self._channel_id
 
+
 class ChannelPasswordChangedEvent(TS3Event):
     """
     Event created on channel password change.
     """
+
     event_type = EventType.CHANNEL_PASSWORD_CHANGED
 
     def __init__(self, data):
         super().__init__(data)
-        self._channel_id = int(data.get('cid', '-1'))
+        self._channel_id = int(data.get("cid", "-1"))
 
     @property
     def channel_id(self):
@@ -365,30 +388,33 @@ class ClientEnteredEvent(TS3Event):
     """
     Event created when a client enters a channel.
     """
+
     event_type = EventType.CLIENT_ENTER
 
     def __init__(self, data):
         super().__init__(data)
         try:
-            self._client_id = int(data.get('clid', '-1'))
-            self._client_name = data.get('client_nickname', '')
-            self._client_uid = data.get('client_unique_identifier', '')
-            self._client_description = data.get('client_description', '')
-            self._client_country = data.get('client_country', '')
-            self._client_away = data.get('client_away', '')
-            self._client_away_msg = data.get('client_away_message', '')
-            self._client_input_muted = data.get('client_input_muted', '')
-            self._client_output_muted = data.get('client_output_muted', '')
-            self._client_outputonly_muted = data.get('client_outputonly_muted', '')
-            self._client_input_hardware = data.get('client_input_hardware', '')
-            self._client_output_hardware = data.get('client_output_hardware', '')
-            self._target_channel_id = int(data.get('ctid', '-1'))
-            self._from_channel_id = int(data.get('cfid', '-1'))
-            self._reason_id = int(data.get('reasonid', '-1'))
-            self._client_is_recording = data.get('client_is_recording', '')
-            self._client_dbid = data.get('client_database_id', '')
-            self._client_servergroups = data.get('client_servergroups', '')
-            self._client_channel_group_id = int(data.get('client_channel_group_id', '-1'))
+            self._client_id = int(data.get("clid", "-1"))
+            self._client_name = data.get("client_nickname", "")
+            self._client_uid = data.get("client_unique_identifier", "")
+            self._client_description = data.get("client_description", "")
+            self._client_country = data.get("client_country", "")
+            self._client_away = data.get("client_away", "")
+            self._client_away_msg = data.get("client_away_message", "")
+            self._client_input_muted = data.get("client_input_muted", "")
+            self._client_output_muted = data.get("client_output_muted", "")
+            self._client_outputonly_muted = data.get("client_outputonly_muted", "")
+            self._client_input_hardware = data.get("client_input_hardware", "")
+            self._client_output_hardware = data.get("client_output_hardware", "")
+            self._target_channel_id = int(data.get("ctid", "-1"))
+            self._from_channel_id = int(data.get("cfid", "-1"))
+            self._reason_id = int(data.get("reasonid", "-1"))
+            self._client_is_recording = data.get("client_is_recording", "")
+            self._client_dbid = data.get("client_database_id", "")
+            self._client_servergroups = data.get("client_servergroups", "")
+            self._client_channel_group_id = int(
+                data.get("client_channel_group_id", "-1")
+            )
         except:
             self._logger.error("Failed to parse ClientEnterEvent:")
             self._logger.error(data)
@@ -478,15 +504,16 @@ class ClientLeftEvent(TS3Event):
     """
     Event created when a client leaves a channel.
     """
+
     event_type = EventType.CLIENT_LEFT
 
     def __init__(self, data):
         super().__init__(data)
-        self._client_id = int(data.get('clid', '-1'))
-        self._target_channel_id = int(data.get('ctid', '-1'))
-        self._from_channel_id = int(data.get('cfid', '-1'))
-        self._reason_id = int(data.get('reasonid', '-1'))
-        self._reason_msg = data.get('reasonmsg', '')
+        self._client_id = int(data.get("clid", "-1"))
+        self._target_channel_id = int(data.get("ctid", "-1"))
+        self._from_channel_id = int(data.get("cfid", "-1"))
+        self._reason_id = int(data.get("reasonid", "-1"))
+        self._reason_msg = data.get("reasonmsg", "")
 
     @property
     def client_id(self):
@@ -509,11 +536,12 @@ class ClientKickedEvent(ClientLeftEvent):
     """
     Event created when a client is kicked.
     """
+
     def __init__(self, data):
         super().__init__(data)
-        self._invoker_id = int(data.get('invokerid', '-1'))
-        self._invoker_name = data.get('invokername', '')
-        self._invoker_uid = data.get('invokeruid', '')
+        self._invoker_id = int(data.get("invokerid", "-1"))
+        self._invoker_name = data.get("invokername", "")
+        self._invoker_uid = data.get("invokeruid", "")
 
     @property
     def invoker_id(self):
@@ -532,9 +560,10 @@ class ClientBannedEvent(ClientKickedEvent):
     """
     Event created when a client is banned.
     """
+
     def __init__(self, data):
         super().__init__(data)
-        self._ban_time = int(data.get("bantime", '-1'))
+        self._ban_time = int(data.get("bantime", "-1"))
 
     @property
     def ban_time(self):
@@ -545,16 +574,17 @@ class ClientMovedEvent(TS3Event):
     """
     Event created when a client is moved from/to a channel.
     """
+
     event_type = EventType.CLIENT_MOVED
 
     def __init__(self, data):
         super().__init__(data)
-        self._client_id = int(data.get('clid', '-1'))
-        self._target_channel_id = int(data.get('ctid', '-1'))
-        self._reason_id = int(data.get('reasonid', '-1'))
-        self._invoker_id = int(data.get('invokerid', '-1'))
-        self._invoker_name = data.get('invokername', '')
-        self._invoker_uid = data.get('invokeruid', '')
+        self._client_id = int(data.get("clid", "-1"))
+        self._target_channel_id = int(data.get("ctid", "-1"))
+        self._reason_id = int(data.get("reasonid", "-1"))
+        self._invoker_id = int(data.get("invokerid", "-1"))
+        self._invoker_name = data.get("invokername", "")
+        self._invoker_uid = data.get("invokeruid", "")
 
     @property
     def client_id(self):
@@ -585,13 +615,14 @@ class ClientMovedSelfEvent(TS3Event):
     """
     Event created when a client is moves themselves from/to a channel.
     """
+
     event_type = EventType.CLIENT_MOVED
 
     def __init__(self, data):
         super().__init__(data)
-        self._client_id = int(data.get('clid', '-1'))
-        self._target_channel_id = int(data.get('ctid', '-1'))
-        self._reason_id = int(data.get('reasonid', '-1'))
+        self._client_id = int(data.get("clid", "-1"))
+        self._target_channel_id = int(data.get("ctid", "-1"))
+        self._reason_id = int(data.get("reasonid", "-1"))
 
     @property
     def client_id(self):
@@ -610,22 +641,23 @@ class TextMessageEvent(TS3Event):
     """
     Event created when a Text Message is received.
     """
+
     event_type = EventType.TEXT_MESSAGE
 
     def __init__(self, data):
         super().__init__(data)
-        if data.get('targetmode') == '1':
-            self._targetmode = 'Private'
-            self._target = data.get('target')
-        elif data.get('targetmode') == '2':
-            self._targetmode = 'Channel'
-        elif data.get('targetmode') == '3':
-            self._targetmode = 'Server'
+        if data.get("targetmode") == "1":
+            self._targetmode = "Private"
+            self._target = data.get("target")
+        elif data.get("targetmode") == "2":
+            self._targetmode = "Channel"
+        elif data.get("targetmode") == "3":
+            self._targetmode = "Server"
 
-        self._message = data.get('msg')
-        self._invoker_id = int(data.get('invokerid', '-1'))
-        self._invoker_name = data.get('invokername', '')
-        self._invoker_uid = data.get('invokeruid', '-1')
+        self._message = data.get("msg")
+        self._invoker_id = int(data.get("invokerid", "-1"))
+        self._invoker_name = data.get("invokername", "")
+        self._invoker_uid = data.get("invokeruid", "-1")
 
     @property
     def invoker_id(self):
@@ -649,6 +681,6 @@ class TextMessageEvent(TS3Event):
 
     @property
     def target(self):
-        if self.targetmode == 'Private':
+        if self.targetmode == "Private":
             return self._target
         return None

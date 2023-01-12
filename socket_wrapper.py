@@ -5,10 +5,12 @@ import socket
 
 from .utilities import TS3ConnectionClosedException
 
+
 class SocketWrapper:
     """
     Socket wrapper for TS3 connections. Provides some helper functions.
     """
+
     # pylint: disable=too-many-arguments
     def __init__(self, host, port, timeout=10, timeout_limit=3):
         """
@@ -41,16 +43,17 @@ class SocketWrapper:
                 except socket.timeout as exc:
                     timeout_cnt += 1
                     if timeout_cnt >= self.timeout_limit:
-                        raise TS3ConnectionClosedException("Socket connection timeout\
-                                                           limit received!") from exc
+                        raise TS3ConnectionClosedException(
+                            "Socket connection timeout limit received!"
+                        ) from exc
                     continue
                 if len(received) == 0:
                     raise TS3ConnectionClosedException("Socket connection was closed!")
                 self._buffer += received
             else:
                 break
-        data = self._buffer[:delimiter_pos + len(delimiter)]
-        self._buffer = self._buffer[delimiter_pos + len(delimiter):]
+        data = self._buffer[: delimiter_pos + len(delimiter)]
+        self._buffer = self._buffer[delimiter_pos + len(delimiter) :]
         if timeout is not None:
             self._conn.settimeout(self.timeout)
         return data
@@ -65,7 +68,7 @@ class SocketWrapper:
             raise TS3ConnectionClosedException(OSError) from exc
 
     def close(self):
-        """"
+        """
         Close the underlying connection.
         """
         self._conn.close()

@@ -14,3 +14,7 @@ addopts = [
 ignore-paths = "tests"
 fail-under = "9.0"
 suggestion-mode = 'yes'
+
+[tool.black]
+target-version = ['py311']
+include = '\.py$'
