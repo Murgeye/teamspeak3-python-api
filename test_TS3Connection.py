@@ -18,7 +18,7 @@ class TestTS3Connection(TestCase):
 
     def test_parse_resp_left_event(self):
         resp = (
-            b"notifyclientleftview cfid=1 ctid=0 reasonid=8 " b"reasonmsg=Left. clid=1"
+            b"notifyclientleftview cfid=1 ctid=0 reasonid=8 reasonmsg=Left. clid=1"
         )
         result = self.conn._parse_resp(resp)
         self.assertIs(ClientLeftEvent, type(result), "ClientLeft not parsed correctly")
